@@ -29,7 +29,7 @@ def find_images(driver, delay, max_images):
         time.sleep(delay)
 
     #traget url (can be chnaged accordingly)
-    url = "https://www.google.com/search?q=meal+prepping+old+pictures&sca_esv=fecf88b048ffc4bd&udm=2&biw=1033&bih=851&sxsrf=AHTn8zrBI7szyBCDIqPNjWJrJ9AYKfyGaw%3A1741505270284&ei=9kLNZ-yHEc7cptQP846RKA&ved=0ahUKEwjs2onYvPyLAxVOrokEHXNHBAUQ4dUDCBE&uact=5&oq=meal+prepping+old+pictures&gs_lp=EgNpbWciGm1lYWwgcHJlcHBpbmcgb2xkIHBpY3R1cmVzSOmAAlCM2gFY6v8BcAN4AJABAJgBRqABsAeqAQIxNbgBA8gBAPgBAZgCBKACjAHCAgcQIxgnGMkCwgIKEAAYgAQYQxiKBcICBhAAGAcYHsICBRAAGIAEmAMAiAYBkgcBNKAHuxI&sclient=img"
+    url = "https://www.google.com/search?q=meal+prepping&sca_esv=1a1f901704b46f8f&udm=2&biw=1365&bih=851&sxsrf=AHTn8zoSD7FuVlcqYlhOTVznTaAHoSVG-A%3A1741512330528&ei=il7NZ_f8H9zIptQP-JuUmAE&ved=0ahUKEwj36dT-1vyLAxVcpIkEHfgNBRMQ4dUDCBE&uact=5&oq=meal+prepping&gs_lp=EgNpbWciDW1lYWwgcHJlcHBpbmcyBxAjGCcYyQIyBxAjGCcYyQIyBRAAGIAEMgUQABiABDIFEAAYgAQyBRAAGIAEMgUQABiABDIFEAAYgAQyBRAAGIAEMgUQABiABEjkGlAYWIMYcAF4AJABAJgBWaAB9waqAQIxM7gBA8gBAPgBAZgCBaACowLCAggQABgHGAgYHsICBhAAGAcYHpgDAIgGAZIHATWgB48N&sclient=img"
     driver.get(url) #webdriver goes to url 
 
     image_urls = set() # stores all urls of images found 
@@ -40,7 +40,8 @@ def find_images(driver, delay, max_images):
         scroll_down(driver)
 
         # find images with this class name (google inspection class name)
-        thumbnails = driver.find_elements(By.CLASS_NAME, "sFlh5c FyHeAf")
+        thumbnails = driver.find_elements(By.CLASS_NAME, "tb08Pd")
+        
 
         #loop thorugh all images thsat have not been seen yet 
         for img in thumbnails[len(image_urls) + skips: max_images]:
@@ -52,13 +53,12 @@ def find_images(driver, delay, max_images):
                 continue
             
             #looking for the real image (pop up window)
-            images = driver.find_elements(By.CLASS_NAME,"sFlh5c FyHeAf iPVvYb")
+            images = driver.find_elements(By.CLASS_NAME,"YQ4gaf")
             for image in images:
-                if image.get_attributes('src') in image_urls:
+                if image.get_attribute('src') in image_urls:
                     max_images += 1
                     skips += 1
                     break
-                
                 
                 if image.get_attribute('src') and 'http' in image.get_attribute('src'):
                     image_urls.add(image.get_attribute('src'))
@@ -81,9 +81,10 @@ def download_images(download_path, url, file_name):
     except Exception as e:
         print("Failed - ", e)
 
-urls = find_images(driver,1, 5)
+urls = find_images(driver,2, 5)
+
 
 for i, url in enumerate(urls):
-    download_images("Meal_Prepping/", url, str(i) + ".jpg")
+    download_images("/Users/alexabowman/Project IV/Project4-Sec1-Group9/Image_Classifier/MP", url, str(i) + ".jpg")
 
 driver.quit()

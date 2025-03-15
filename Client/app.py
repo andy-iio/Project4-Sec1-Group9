@@ -27,27 +27,27 @@ def get_saved_images(username):
     ]
 
 #home page
-@app.route('/')
+@app.route('/home')
 def index():
     images = get_homepage_images()
     return render_template('index.html', images=images)
 
 #login page
-@app.route('/login')
+@app.route('/')
 def login():
     return render_template('login.html')
 
 #saved page 
 @app.route('/saved')
 def saved():
-    username = "TestUsername"
+    username = "TestUser"
     images = get_saved_images(username)
     return render_template('saved-section.html', images=images, username=username)
 
 #profile page
 @app.route('/profile')
 def profile():
-    username = "TestUsername"
+    username = "TestUser"
     return render_template('profile.html', username=username)
 
 if __name__ == '__main__':

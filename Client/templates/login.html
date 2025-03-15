@@ -1,19 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
 <body class="login" >
-<h1 class="d-flex justify-content-center">LOGIN</h1>
-<div class="d-flex justify-content-center">
-    <form class="w-50 p-5 formbg">
-        <div class="form-group">
-        <label for="username">Username</label>
-        <input type="username" class="form-control" id="username" placeholder="Enter username">
-        </div>
-        <div class="form-group my-3">
-        <label for="exampleInputPassword1">Password</label>
-        <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
-        </div>
-        <a class="btn btn-primary my-3" href="{{ url_for('index') }}">Login</a>
-    </form>
-</div>
+    <div class="logpg py-5">
+    <h1 class="d-flex justify-content-center py-3">AFTERMATH NETWORK</h1>
+    <h2 class="d-flex justify-content-center">LOGIN</h2>
+    <div class="d-flex justify-content-center">
+        <form class="w-50 p-5 formbg">
+            <div class="form-group">
+            <label for="username">Username</label>
+            <input type="username" class="form-control" id="username" placeholder="Enter username">
+            </div>
+            <div class="form-group my-3">
+            <label for="exampleInputPassword1">Password</label>
+            <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+            </div>
+            <a class="btn btn-primary my-3" href="{{ url_for('index') }}">Login</a>
+        </form>
+    </div>
+    </div>
 </body>
 {% endblock %}

@@ -32,17 +32,22 @@ def index():
     images = get_homepage_images()
     return render_template('index.html', images=images)
 
+#login page
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
 #saved page 
 @app.route('/saved')
 def saved():
-    username = "Username001"
+    username = "TestUsername"
     images = get_saved_images(username)
     return render_template('saved-section.html', images=images, username=username)
 
 #profile page
 @app.route('/profile')
 def profile():
-    username = "Username001"
+    username = "TestUsername"
     return render_template('profile.html', username=username)
 
 if __name__ == '__main__':

@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-
+<body class="login" >
 <h1 class="d-flex justify-content-center">LOGIN</h1>
 <div class="d-flex justify-content-center">
-    <form class="w-50 p-5">
+    <form class="w-50 p-5 formbg">
         <div class="form-group">
         <label for="username">Username</label>
         <input type="username" class="form-control" id="username" placeholder="Enter username">
@@ -15,4 +15,5 @@
         <a class="btn btn-primary my-3" href="{{ url_for('index') }}">Login</a>
     </form>
 </div>
+</body>
 {% endblock %}

@@ -22,3 +22,19 @@
 .navbar {
     margin-bottom: 20px;
 }
+
+.form-group {
+    color:white;
+}
+
+.login{
+    background-size: cover; 
+    background-image: url('../images/bg.jpg');
+    font-size: large;
+    font-weight: bold;
+    height: 100%;
+}
+
+.formbg{
+    background-color: rgba(14, 13, 13, 0.5);
+}

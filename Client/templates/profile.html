@@ -3,8 +3,15 @@
 {% block title %}Aftermath Network - Home{% endblock %}
 
 {% block content %}
-    <h1>{{username}}'s Profile</h1>
-    
+    <h1 class="text-center">{{username}}'s Profile</h1>
+    <div class="justify-content-center">
+        <div class="row">
+            <img src="../static/images/profile.jpg" class="img-thumbnail rounded-circle" style="width:200px;height:200px;">
+        </div>
+        <div class="row w-25 my-5">
+            <button class="btn-primary">Change profile picture</button>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}

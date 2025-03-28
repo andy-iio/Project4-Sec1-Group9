@@ -42,7 +42,6 @@ def find_images(driver, delay, max_images):
         # find images with this class name (google inspection class name)
         thumbnails = driver.find_elements(By.CLASS_NAME, "tb08Pd")
         
-
         #loop thorugh all images thsat have not been seen yet 
         for img in thumbnails[len(image_urls) + skips: max_images]:
             #clicking on the images 
@@ -82,7 +81,6 @@ def download_images(download_path, url, file_name):
         print("Failed - ", e)
 
 urls = find_images(driver,2, 5)
-
 
 for i, url in enumerate(urls):
     download_images("/Users/alexabowman/Project IV/Project4-Sec1-Group9/Image_Classifier/MP", url, str(i) + ".jpg")

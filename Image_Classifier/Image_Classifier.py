@@ -1,30 +1,17 @@
-# some of the required libraries for classification 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import keras
+#Creating a deep learning pipeline (Creating my own CNN)
+
+#Set Up and Laod Data
+#Installing and setting up dependicies
+
+#what libaries I am using 
 import tensorflow as tf
-import numpy as np
+import os
 
-# prepare our data
-# load data
-    # label used to read data
-# size of images (224 pixels)
-image_size = 224
-    #get data and resize images
-#function that we be used to load the data
-def load_data():
-        # some code   
+#Setting a GPU Memeory Consumption Growth (limit memory)
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu,True)
 
-#Vizulization of my data (this is just for my understanding)
 
-#Data Preprocessing
-    #Noramlize Data
-    #Data Augmentation 
+    
 
-# trian / test spilt
-
-# trian classifier 
-
-# test performance 
-    #do this using plt and graphs to validate accuracy 
-        #ex. 84% accuracy in catrogry [x]

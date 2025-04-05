@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from tcp_client import TCPClient
 import time
+import base64
 
 app = Flask(__name__)
 
@@ -103,12 +104,28 @@ def upload_image():
     if image.filename == '':
         return 'empty string, no selected file', 400
     
-    #temporary for testing until we send info to server
-    return jsonify({
+    #need to encode the image to base64 to be able to actually send it
+    #find info here: https://docs.python.org/3/library/base64.html
+    image_content = image.read()
+    base64_image = base64.b64encode(image_content).decode('utf-8')
+
+    data = {
         'filename': image.filename,
         'caption': caption,
-        'tags': tags
-    })
+        'tags': tags,
+        'image': base64_image
+    }
+
+    success, response = tcp_client.send_request("UPLOAD_IMAGE", data)
+
+    if success:
+        return jsonify({
+            'filename': image.filename,
+            'caption': caption,
+            'tags': tags
+        })
+    else:
+        return jsonify({'status': 'error', 'message': response})
 
 
 

@@ -44,3 +44,38 @@
     color: white;
     background-color: rgba(14, 13, 13, 0.5);
 }
+
+
+
+/* upload button styling */
+#upload-button-container {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: 1050;
+}
+
+#upload-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 70px;
+    height: 70px;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s;
+}
+
+/* for animated effect like pinterest */
+#upload-button:hover {
+    transform: scale(1.1);
+}
+
+#image-preview img {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 4px;
+}

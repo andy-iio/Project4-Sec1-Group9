@@ -89,6 +89,30 @@ def profile():
     username = "TestUser"
     return render_template('profile.html', username=username)
 
+#image uploads
+@app.route('/upload', methods=['POST'])
+def upload_image():
+    if 'image' not in request.files:
+        return 'no file (flask side)', 400
+    #gets info from form
+    image = request.files['image']
+    caption = request.form.get('caption')
+    tags = request.form.get('tags')
+    
+    #handles case where no file is selected
+    if image.filename == '':
+        return 'empty string, no selected file', 400
+    
+    #temporary for testing until we send info to server
+    return jsonify({
+        'filename': image.filename,
+        'caption': caption,
+        'tags': tags
+    })
+
+
+
+
 # API endpoint to check TCP connection
 @app.route('/api/check_connection')
 def check_connection():

@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # Create a global client instance
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
-
+upload_images = []
 #temporary for now, we will need to set up the getting of images through the server
 def get_homepage_images():
     # Use TCP client to fetch images
@@ -16,16 +16,18 @@ def get_homepage_images():
     if success:
         # In a real implementation, response would contain the images
         # For now, return the static list
-        return [
-            {"id": 1, "url": "./static/images/1.jpg", "caption": "caption for image 1", "category": "category 1"},
-            {"id": 2, "url": "./static/images/2.jpg", "caption": "caption for image 2", "category": "category 1"},
-            {"id": 3, "url": "./static/images/3.jpg", "caption": "caption for image 3", "category": "category 1"},
-            {"id": 4, "url": "./static/images/4.jpg", "caption": "caption for image 4", "category": "category 1"},
-            {"id": 5, "url": "./static/images/5.jpg", "caption": "caption for image 5", "category": "category 1"},
-            {"id": 6, "url": "./static/images/6.jpg", "caption": "caption for image 6", "category": "category 1"},
-            {"id": 7, "url": "./static/images/7.jpg", "caption": "caption for image 7", "category": "category 1"},
-            {"id": 8, "url": "./static/images/8.jpg", "caption": "caption for image 8", "category": "category 1"},
+        default_images = [
+            {"id": 1, "url": "./static/images/1.jpg", "caption": "Best Survival Tools for Preppers", "category": "category 1"},
+            {"id": 2, "url": "./static/images/2.jpg", "caption": "Prepare for Food Shortages", "category": "category 1"},
+            {"id": 3, "url": "./static/images/3.jpg", "caption": "Amazing Survival Recipes", "category": "category 1"},
+            {"id": 4, "url": "./static/images/4.jpg", "caption": "YOU NEED TO KNOW THESE LIFE HACKS!", "category": "category 1"},
+            {"id": 5, "url": "./static/images/5.jpg", "caption": "Your emergency stockpile isnt complete without these 100 things", "category": "category 1"},
+            {"id": 6, "url": "./static/images/6.jpg", "caption": "World War 3 is COming, are you Prepared??", "category": "category 1"},
+            {"id": 7, "url": "./static/images/7.jpg", "caption": "Want to Survive? Better read this..", "category": "category 1"},
+            {"id": 8, "url": "./static/images/8.jpg", "caption": "Clothes that Guarentee Survival", "category": "category 1"},
         ]
+
+        return upload_images + default_images
     else:
         # Log the error
         app.logger.error(f"Failed to get images: {response}")
@@ -39,10 +41,10 @@ def get_saved_images(username):
         # In a real implementation, response would contain the saved images
         # For now, return the static list
         return [
-            {"id": 1, "url": "./static/images/9.jpg", "caption": "caption for image 1", "category": "category 1"},
-            {"id": 2, "url": "./static/images/10.jpg", "caption": "caption for image 2", "category": "category 1"},
-            {"id": 3, "url": "./static/images/11.jpg", "caption": "caption for image 3", "category": "category 1"},
-            {"id": 4, "url": "./static/images/8.jpg", "caption": "caption for image 4", "category": "category 1"}
+            {"id": 1, "url": "./static/images/9.jpg", "caption": "If you don'T have these in your pantry, uh oh", "category": "category 1"},
+            {"id": 2, "url": "./static/images/10.jpg", "caption": "Rebuild after the apocalypse is over with these plants", "category": "category 1"},
+            {"id": 3, "url": "./static/images/11.jpg", "caption": "Flowers will be worth millions soon, enjoy them now", "category": "category 1"},
+            {"id": 8, "url": "./static/images/8.jpg", "caption": "Clothes that Guarentee Survival", "category": "category 1"},
         ]
     else:
         # Log the error
@@ -80,14 +82,14 @@ def process_login():
 #saved page 
 @app.route('/saved')
 def saved():
-    username = "TestUser"
+    username = "Andy"
     images = get_saved_images(username)
     return render_template('saved-section.html', images=images, username=username)
 
 #profile page
 @app.route('/profile')
 def profile():
-    username = "TestUser"
+    username = "Andy"
     return render_template('profile.html', username=username)
 
 #image uploads
@@ -119,11 +121,18 @@ def upload_image():
     success, response = tcp_client.send_request("UPLOAD_IMAGE", data)
 
     if success:
-        return jsonify({
-            'filename': image.filename,
-            'caption': caption,
-            'tags': tags
-        })
+        # upload_images.insert(0, {
+        #     "id": 999, 
+        #     "url": f"./static/uploads/{image.filename}", 
+        #     "caption": caption,
+        #     "category": "category"
+        # })
+        return redirect(url_for('index'))
+        # return jsonify({
+        #     'filename': image.filename,
+        #     'caption': caption,
+        #     'tags': tags
+        # })
     else:
         return jsonify({'status': 'error', 'message': response})
 

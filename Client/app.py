@@ -1,63 +1,54 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 from tcp_client import TCPClient
 import time
 import base64
+import os
 
 app = Flask(__name__)
+app.secret_key = 'preppers2025'  # Any string works for a project
 
 # Create a global client instance
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
-#temporary for now, we will need to set up the getting of images through the server
+# Create uploads directory if it doesn't exist
+os.makedirs('static/images/uploads', exist_ok=True)
+
 def get_homepage_images():
-    # Use TCP client to fetch images
+    """Get images for home page from server"""
     success, response = tcp_client.send_request("GET_IMAGES", {})
     
-    if success:
-        # In a real implementation, response would contain the images
-        # For now, return the static list
-        return [
-            {"id": 1, "url": "./static/images/1.jpg", "caption": "caption for image 1", "category": "category 1"},
-            {"id": 2, "url": "./static/images/2.jpg", "caption": "caption for image 2", "category": "category 1"},
-            {"id": 3, "url": "./static/images/3.jpg", "caption": "caption for image 3", "category": "category 1"},
-            {"id": 4, "url": "./static/images/4.jpg", "caption": "caption for image 4", "category": "category 1"},
-            {"id": 5, "url": "./static/images/5.jpg", "caption": "caption for image 5", "category": "category 1"},
-            {"id": 6, "url": "./static/images/6.jpg", "caption": "caption for image 6", "category": "category 1"},
-            {"id": 7, "url": "./static/images/7.jpg", "caption": "caption for image 7", "category": "category 1"},
-            {"id": 8, "url": "./static/images/8.jpg", "caption": "caption for image 8", "category": "category 1"},
-        ]
+    if success and response['body']['command'] == 'IMAGES':
+        return response['body']['data'].get('images', [])
     else:
         # Log the error
         app.logger.error(f"Failed to get images: {response}")
         return []
 
-def get_saved_images(username):
-    # Use TCP client to fetch saved images
-    success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
+def get_saved_images(user_id):
+    """Get saved images for a user from server"""
+    success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"user_id": user_id})
     
-    if success:
-        # In a real implementation, response would contain the saved images
-        # For now, return the static list
-        return [
-            {"id": 1, "url": "./static/images/9.jpg", "caption": "caption for image 1", "category": "category 1"},
-            {"id": 2, "url": "./static/images/10.jpg", "caption": "caption for image 2", "category": "category 1"},
-            {"id": 3, "url": "./static/images/11.jpg", "caption": "caption for image 3", "category": "category 1"},
-            {"id": 4, "url": "./static/images/8.jpg", "caption": "caption for image 4", "category": "category 1"}
-        ]
+    if success and response['body']['command'] == 'SAVED_IMAGES':
+        return response['body']['data'].get('images', [])
     else:
         # Log the error
         app.logger.error(f"Failed to get saved images: {response}")
         return []
 
-#home page
+# Home page
 @app.route('/home')
 def index():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
     images = get_homepage_images()
-    return render_template('index.html', images=images)
+    return render_template('index.html', images=images, username=session.get('username'))
 
-#login page
+# Login page
 @app.route('/')
 def login():
+    if 'user_id' in session:
+        return redirect(url_for('index'))
     return render_template('login.html')
 
 # Process login
@@ -72,40 +63,87 @@ def process_login():
         "password": password
     })
     
-    if success:
+    if success and response['body']['command'] == 'LOGIN_SUCCESS':
+        # Store user info in session
+        session['user_id'] = response['body']['data']['user_id']
+        session['username'] = response['body']['data']['username']
         return redirect(url_for('index'))
     else:
-        return render_template('login.html', error="Login failed")
+        return render_template('login.html', error="Invalid username or password")
 
-#saved page 
+# Register page
+@app.route('/register')
+def register():
+    return render_template('register.html')
+
+# Process registration
+@app.route('/process_register', methods=['POST'])
+def process_register():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    email = request.form.get('email')
+    
+    # Use TCP client to register
+    success, response = tcp_client.send_request("REGISTER", {
+        "username": username,
+        "password": password,
+        "email": email
+    })
+    
+    if success and response['body']['command'] == 'REGISTER_SUCCESS':
+        # Automatically log in the new user
+        session['user_id'] = response['body']['data']['user_id']
+        session['username'] = response['body']['data']['username']
+        return redirect(url_for('index'))
+    else:
+        error_message = "Registration failed"
+        if 'message' in response['body']['data']:
+            error_message = response['body']['data']['message']
+        return render_template('register.html', error=error_message)
+
+# Logout
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('username', None)
+    return redirect(url_for('login'))
+
+# Saved page 
 @app.route('/saved')
 def saved():
-    username = "TestUser"
-    images = get_saved_images(username)
-    return render_template('saved-section.html', images=images, username=username)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    images = get_saved_images(session['user_id'])
+    return render_template('saved-section.html', images=images, username=session.get('username'))
 
-#profile page
+# Profile page
 @app.route('/profile')
 def profile():
-    username = "TestUser"
-    return render_template('profile.html', username=username)
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    return render_template('profile.html', username=session.get('username'))
 
-#image uploads
+# Image uploads
 @app.route('/upload', methods=['POST'])
 def upload_image():
+    if 'user_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+        
     if 'image' not in request.files:
-        return 'no file (flask side)', 400
-    #gets info from form
+        return jsonify({'status': 'error', 'message': 'No file provided'}), 400
+        
+    # Gets info from form
     image = request.files['image']
-    caption = request.form.get('caption')
-    tags = request.form.get('tags')
+    caption = request.form.get('caption', '')
+    tags = request.form.get('tags', '')
     
-    #handles case where no file is selected
+    # Handles case where no file is selected
     if image.filename == '':
-        return 'empty string, no selected file', 400
+        return jsonify({'status': 'error', 'message': 'No file selected'}), 400
     
-    #need to encode the image to base64 to be able to actually send it
-    #find info here: https://docs.python.org/3/library/base64.html
+    # Need to encode the image to base64 to be able to send it
     image_content = image.read()
     base64_image = base64.b64encode(image_content).decode('utf-8')
 
@@ -113,22 +151,70 @@ def upload_image():
         'filename': image.filename,
         'caption': caption,
         'tags': tags,
+        'user_id': session['user_id'],
         'image': base64_image
     }
 
     success, response = tcp_client.send_request("UPLOAD_IMAGE", data)
 
-    if success:
+    if success and response['body']['command'] == 'UPLOAD_SUCCESS':
         return jsonify({
+            'status': 'success',
             'filename': image.filename,
             'caption': caption,
-            'tags': tags
+            'tags': tags,
+            'image_id': response['body']['data']['image_id']
         })
     else:
-        return jsonify({'status': 'error', 'message': response})
+        error_message = "Upload failed"
+        if 'message' in response['body']['data']:
+            error_message = response['body']['data']['message']
+        return jsonify({'status': 'error', 'message': error_message})
 
+# Save an image
+@app.route('/api/save_image', methods=['POST'])
+def save_image():
+    if 'user_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+        
+    image_id = request.json.get('image_id')
+    
+    if not image_id:
+        return jsonify({'status': 'error', 'message': 'No image ID provided'}), 400
+    
+    success, response = tcp_client.send_request("SAVE_IMAGE", {
+        'user_id': session['user_id'],
+        'image_id': image_id
+    })
+    
+    if success and response['body']['command'] == 'SAVE_IMAGE_SUCCESS':
+        return jsonify({'status': 'success'})
+    else:
+        error_message = "Failed to save image"
+        if 'message' in response['body']['data']:
+            error_message = response['body']['data']['message']
+        return jsonify({'status': 'error', 'message': error_message})
 
-
+# Unsave an image
+@app.route('/api/unsave_image', methods=['POST'])
+def unsave_image():
+    if 'user_id' not in session:
+        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
+        
+    image_id = request.json.get('image_id')
+    
+    if not image_id:
+        return jsonify({'status': 'error', 'message': 'No image ID provided'}), 400
+    
+    success, response = tcp_client.send_request("UNSAVE_IMAGE", {
+        'user_id': session['user_id'],
+        'image_id': image_id
+    })
+    
+    if success and response['body']['command'] == 'UNSAVE_IMAGE_SUCCESS':
+        return jsonify({'status': 'success'})
+    else:
+        return jsonify({'status': 'error', 'message': 'Failed to unsave image'})
 
 # API endpoint to check TCP connection
 @app.route('/api/check_connection')

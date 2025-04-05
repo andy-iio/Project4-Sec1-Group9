@@ -4,7 +4,7 @@ import logging
 import hashlib
 import time
 
-# Logging structure
+# Logging txt
 logging.basicConfig(
     filename='client_log.txt',
     filemode='w',

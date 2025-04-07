@@ -12,6 +12,7 @@
     <div class="card-body">
       <h5 class="card-title">{{ image.caption }}</h5>
       <p class="card-text">{{ image.category }}</p>
+      <button class="btn btn-success save-btn" data-id="{{ image.id }}">Save to Vault</button>
     </div>
   </div>
     {% endfor %}

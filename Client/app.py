@@ -57,6 +57,19 @@ def saved():
     images = image_manager.get_saved_images(username)
     return render_template('saved-section.html', images=images, username=username)
 
+#when clicking the saved button on an image, copy it to the saved section
+@app.route('/save_image', methods=['POST'])
+def save_image():
+    image_id = request.json.get('image_id')
+    username = "Andy" 
+
+    image = image_manager.get_image_by_id(image_id)
+    if image:
+        image_manager.save_image_for_user(image, username)
+        return jsonify({"success": True, "message": "Image saved to your vault!!"})
+
+    return jsonify({"success": False, "message": "Couldn't save this image. Please try again later"})
+
 #profile page
 @app.route('/profile')
 def profile():

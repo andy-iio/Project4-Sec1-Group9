@@ -4,14 +4,28 @@ import json
 
 
 class ImageManager:
-    def __init__(self, upload_folder='./static/uploads', saved_images_file='saved_images.json'):
+    def __init__(self, upload_folder='./static/uploads', saved_images_file='saved_images.json', uploaded_images_file='images.json'):
         self.upload_folder = upload_folder
         self.saved_images_file = saved_images_file
+        self.uploaded_images_file = uploaded_images_file
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
 
+        self.uploaded_images = []
+        self.saved_images = {}
         self.load_saved_images()
+        self.load_uploaded_images()
 
+    def load_uploaded_images(self):
+        if os.path.exists(self.uploaded_images_file):
+            with open(self.uploaded_images_file, 'r') as f:
+                self.uploaded_images = json.load(f)
+        else:
+            self.uploaded_images = []
+
+    def save_uploaded_images(self):
+        with open(self.uploaded_images_file, 'w') as f:
+            json.dump(self.uploaded_images, f, indent=4)
 
     def upload_image(self, image_file, caption, tags):
         #handles case where no file is selected
@@ -30,29 +44,25 @@ class ImageManager:
         with open(image_path, 'wb') as f:
             f.write(image_content)
         
-        #return image details for success
-        return {
-            'filename': image_filename,
+        #new image dictionary for the users newly uploaded image
+        uploaded_image = {
+            'id': len(self.uploaded_images) + 1, 
+            'url': f"./static/uploads/{image_filename}",
             'caption': caption,
-            'tags': tags,
+            'category': tags,
             'image': base64_image
-        }, None
+        }
+
+        #store in file  (while db not up)
+        self.uploaded_images.append(uploaded_image)
+        self.save_uploaded_images()
+
+        #return image details for success
+        return uploaded_image, None
     
     def get_images(self):
-        #to get from the database (database not set up yet tho?)
-        return [
-            {"id": 1, "url": "./static/images/1.jpg", "caption": "Best Survival Tools for Preppers", "category": "Tools"},
-            {"id": 2, "url": "./static/images/2.jpg", "caption": "Prepare for Food Shortages", "category": "Meal Prep"},
-            {"id": 3, "url": "./static/images/3.jpg", "caption": "Amazing Survival Recipes", "category": "Meal Prep"},
-            {"id": 4, "url": "./static/images/4.jpg", "caption": "YOU NEED TO KNOW THESE LIFE HACKS!", "category": "Hacks"},
-            {"id": 5, "url": "./static/images/5.jpg", "caption": "Your emergency stockpile isnt complete without these 100 things", "category": "Tools"},
-            {"id": 6, "url": "./static/images/6.jpg", "caption": "World War 3 is COming, are you Prepared??", "category": "Tips"},
-            {"id": 7, "url": "./static/images/7.jpg", "caption": "Want to Survive? Better read this..", "category": "Tips"},
-            {"id": 8, "url": "./static/images/8.jpg", "caption": "Clothes that Guarentee Survival", "category": "Clothes"},
-            {"id": 9, "url": "./static/images/9.jpg", "caption": "If you don'T have these in your pantry, uh oh", "category": "Meal Prep"},
-            {"id": 10, "url": "./static/images/10.jpg", "caption": "Rebuild after the apocalypse is over with these plants", "category": "Gardening"},
-            {"id": 11, "url": "./static/images/11.jpg", "caption": "Flowers will be worth millions soon, enjoy them now", "category": "Gardening"},
-        ]
+        #when database is ready, this will be to get from the database instead
+        return self.uploaded_images
     
     
     def load_saved_images(self):

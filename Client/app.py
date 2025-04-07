@@ -4,64 +4,18 @@ import time
 import base64
 
 from comment_manager import CommentManager
+from image_manager import ImageManager
 
 app = Flask(__name__)
 
 # Create a global client instance
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
-#comment manager instance
+#initialize the managers 
 comment_manager = CommentManager()
+image_manager = ImageManager()
 
 upload_images = []
-#temporary for now, we will need to set up the getting of images through the server
-def get_homepage_images():
-    # Use TCP client to fetch images
-    success, response = tcp_client.send_request("GET_IMAGES", {})
-    
-    if success:
-        # In a real implementation, response would contain the images
-        # For now, return the static list
-        default_images = [
-            {"id": 1, "url": "./static/images/1.jpg", "caption": "Best Survival Tools for Preppers", "category": "category 1"},
-            {"id": 2, "url": "./static/images/2.jpg", "caption": "Prepare for Food Shortages", "category": "category 1"},
-            {"id": 3, "url": "./static/images/3.jpg", "caption": "Amazing Survival Recipes", "category": "category 1"},
-            {"id": 4, "url": "./static/images/4.jpg", "caption": "YOU NEED TO KNOW THESE LIFE HACKS!", "category": "category 1"},
-            {"id": 5, "url": "./static/images/5.jpg", "caption": "Your emergency stockpile isnt complete without these 100 things", "category": "category 1"},
-            {"id": 6, "url": "./static/images/6.jpg", "caption": "World War 3 is COming, are you Prepared??", "category": "category 1"},
-            {"id": 7, "url": "./static/images/7.jpg", "caption": "Want to Survive? Better read this..", "category": "category 1"},
-            {"id": 8, "url": "./static/images/8.jpg", "caption": "Clothes that Guarentee Survival", "category": "category 1"},
-        ]
-
-        return upload_images + default_images
-    else:
-        # Log the error
-        app.logger.error(f"Failed to get images: {response}")
-        return []
-
-def get_saved_images(username):
-    # Use TCP client to fetch saved images
-    success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
-    
-    if success:
-        # In a real implementation, response would contain the saved images
-        # For now, return the static list
-        return [
-            {"id": 1, "url": "./static/images/9.jpg", "caption": "If you don'T have these in your pantry, uh oh", "category": "category 1"},
-            {"id": 2, "url": "./static/images/10.jpg", "caption": "Rebuild after the apocalypse is over with these plants", "category": "category 1"},
-            {"id": 3, "url": "./static/images/11.jpg", "caption": "Flowers will be worth millions soon, enjoy them now", "category": "category 1"},
-            {"id": 8, "url": "./static/images/8.jpg", "caption": "Clothes that Guarentee Survival", "category": "category 1"},
-        ]
-    else:
-        # Log the error
-        app.logger.error(f"Failed to get saved images: {response}")
-        return []
-
-#home page
-@app.route('/home')
-def index():
-    images = get_homepage_images()
-    return render_template('index.html', images=images)
 
 #login page
 @app.route('/')
@@ -84,12 +38,23 @@ def process_login():
         return redirect(url_for('index'))
     else:
         return render_template('login.html', error="Login failed")
+    
+#home page
+@app.route('/home')
+def index():
+    # Use TCP client to fetch images
+    # success, response = tcp_client.send_request("GET_IMAGES", {})
+    images = image_manager.get_images()
+    return render_template('index.html', images=images)
+
 
 #saved page 
 @app.route('/saved')
 def saved():
+    # Use TCP client to fetch saved images
+    # success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
     username = "Andy"
-    images = get_saved_images(username)
+    images = image_manager.get_saved_images(username)
     return render_template('saved-section.html', images=images, username=username)
 
 #profile page
@@ -108,37 +73,13 @@ def upload_image():
     caption = request.form.get('caption')
     tags = request.form.get('tags')
     
-    #handles case where no file is selected
-    if image.filename == '':
-        return 'empty string, no selected file', 400
+    image_data, error = image_manager.upload_image(image, caption, tags)
+    if error:
+        return error, 400
     
-    #need to encode the image to base64 to be able to actually send it
-    #find info here: https://docs.python.org/3/library/base64.html
-    image_content = image.read()
-    base64_image = base64.b64encode(image_content).decode('utf-8')
-
-    data = {
-        'filename': image.filename,
-        'caption': caption,
-        'tags': tags,
-        'image': base64_image
-    }
-
-    success, response = tcp_client.send_request("UPLOAD_IMAGE", data)
-
+    success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
     if success:
-        # upload_images.insert(0, {
-        #     "id": 999, 
-        #     "url": f"./static/uploads/{image.filename}", 
-        #     "caption": caption,
-        #     "category": "category"
-        # })
         return redirect(url_for('index'))
-        # return jsonify({
-        #     'filename': image.filename,
-        #     'caption': caption,
-        #     'tags': tags
-        # })
     else:
         return jsonify({'status': 'error', 'message': response})
 

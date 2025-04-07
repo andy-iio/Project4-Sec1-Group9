@@ -49,8 +49,7 @@ class ImageManager:
             'id': len(self.uploaded_images) + 1, 
             'url': f"./static/uploads/{image_filename}",
             'caption': caption,
-            'category': tags,
-            'image': base64_image
+            'category': tags
         }
 
         #store in file  (while db not up)

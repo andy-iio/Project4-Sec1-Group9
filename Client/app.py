@@ -2,14 +2,17 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 from tcp_client import TCPClient
 import time
 import base64
-import json
-from datetime import datetime
-import os
+
+from comment_manager import CommentManager
 
 app = Flask(__name__)
 
 # Create a global client instance
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
+
+#comment manager instance
+comment_manager = CommentManager()
+
 upload_images = []
 #temporary for now, we will need to set up the getting of images through the server
 def get_homepage_images():
@@ -140,27 +143,10 @@ def upload_image():
         return jsonify({'status': 'error', 'message': response})
 
 #comment handleing routes
-#just using a file, its easier, we can change to database if time
-COMMENTS_FILE = 'comments.json'
-
-def load_comments():
-    if os.path.exists(COMMENTS_FILE):
-        try:
-            with open(COMMENTS_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            return {}
-    return {}
-
-def save_comments(comments):
-    with open(COMMENTS_FILE, 'w') as f:
-        json.dump(comments, f)
-
 #to get the comments for a specific post
 @app.route('/api/comments/<int:image_id>')
-def get_comments(image_id):
-    comments_data = load_comments()
-    image_comments = comments_data.get(str(image_id), [])
+def get_comments_for_img(image_id):
+    image_comments = comment_manager.get_comments(image_id)
     return jsonify({"success": True, "comments": image_comments})
 
 #save a newly written comment
@@ -169,20 +155,13 @@ def save_comment():
     data = request.json
     if not data or 'imageId' not in data or 'text' not in data:
         return jsonify({"success": False, "message": "fill out all required fields"})
+
+    image_id = data['imageId']
+    comment_text = data['text']
     
-    image_id = str(data['imageId'])
-    comment_text = data['text']  
-    comments_data = load_comments()
+    result = comment_manager.save_comment(image_id, comment_text)
     
-    if image_id not in comments_data:
-        comments_data[image_id] = []
-    comments_data[image_id].append({
-        "text": comment_text,
-        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    })
-    
-    save_comments(comments_data)  
-    return jsonify({"success": True, "message": "comment posted!!"})
+    return jsonify(result)
 
 
 # API endpoint to check TCP connection

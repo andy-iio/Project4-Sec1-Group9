@@ -5,6 +5,11 @@ import logging
 import hashlib
 import time
 from datetime import datetime
+import os
+
+#importiing the load an predict function from Image Classifier Branch (Alexa's Branch)
+from Image_Classifier import load_and_predict
+
 
 # Set up logging
 logging.basicConfig(
@@ -188,6 +193,22 @@ class TCPServer:
             self.server_socket.close()
         logger.info("Server stopped")
 
+    #updated recieve_image function
+    def receive_image(self, filename, filesize): #takes in filename and size
+        os.makedirs("Stored_Images", exist_ok=True) #making a directory to store images from client
+        save_path = os.path.join("Stored_Images", filename) #saiving images to that direcotry 
+        
+        with open(filename, 'wb') as f: #opens in binary 
+            data = self.client_socket.recv(filesize)
+            f.write(data) #saving and writing images
+
+            try:                    #loading and calling model for prediction of image on path 
+                predicted_class, _ = load_and_predict("imageclassiferHS_Updated.h5", save_path)
+                
+                #prediction check 
+                return {"status": "success", "prediction": predicted_class}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
 
 
 if __name__ == "__main__":

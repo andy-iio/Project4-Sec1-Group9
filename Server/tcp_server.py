@@ -6,9 +6,12 @@ import hashlib
 import time
 from datetime import datetime
 import os
+import sys
 
 #importiing the load an predict function from Image Classifier Branch (Alexa's Branch)
-from Image_Classifier import load_and_predict
+# Adds the project root to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Image_Classifier.Image_Classifier.deployment import load_and_predict
 
 
 # Set up logging
@@ -40,6 +43,36 @@ class TCPServerConnection:
         """Validate the checksum matches the data"""
         return self.calculate_checksum(data) == checksum
     
+       #updated recieve_image function
+    def receive_image(client_socket, filename, filesize):
+        os.makedirs("Stored_Images", exist_ok=True)  # Ensure the directory exists
+        save_path = os.path.join("Stored_Images", filename)  # Specify the path to save the file
+        
+        with open(save_path, 'wb') as f:  # Open the file in write-binary mode
+            data = client_socket.recv(filesize)  # Receive image data
+            f.write(data)  # Write the data to the file
+
+            # After saving the image, process it
+            try:
+                # Use the path where the image was saved
+                model_path = os.path.join("Image_Classifier", "Image_Classifier", "imageclassiferHS_Updated.h5")
+                predicted_class, _ = load_and_predict(model_path, save_path)
+
+                print(f"Predicted Class: {predicted_class}")  # Debugging log
+                logger.info(f"Predicted Class: {predicted_class}")  # You can use logger for more control
+                
+                # Now that we have the predicted class, create the response data
+                response_data = {
+                    "status": "success",
+                    "prediction": predicted_class,
+                    "category": predicted_class  # Fix: Assign predicted class to category
+                }
+                
+                return response_data
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
+
+    
     def handle_request(self):
         """Handle client requests"""
         try:
@@ -50,7 +83,6 @@ class TCPServerConnection:
                 data = self.client_socket.recv(4096).decode('utf-8')
                 if not data:
                     break
-                    
                 logger.info(f"Received data from {self.address}: {data[:100]}...")
                 
                 try:
@@ -77,7 +109,6 @@ class TCPServerConnection:
                         logger.warning(f"Missing checksum in request from {self.address}")
                         self.send_error("Missing checksum")
                         continue
-                    
                     # Echo the request back to the client (for testing)
                     echo_response = self.create_packet("ECHO", {
                         "message": "Server received your request",
@@ -87,6 +118,24 @@ class TCPServerConnection:
                     
                     self.client_socket.sendall(json.dumps(echo_response).encode('utf-8'))
                     logger.info(f"Sent echo response to {self.address}")
+
+                    try:
+                        #get command 
+                        command = packet['body']['command'] 
+                        if command == "UPLOAD_IMAGE":
+                                # Receiving an image on the server end
+                                    if 'filename' in packet['body'] and 'filesize' in packet['body']:
+                                        # Assigning those variables accordingly
+                                        filename = packet['body']['filename']
+                                        filesize = packet['body']['filesize']
+                                        # Calling the function to handle the image on the server end (recieve_image (load_and_predict()))
+                                        self.receive_image(self.client_socket, filename, filesize)
+                                    else:
+                                        # If the image format is incorrect
+                                        logger.info("Image not in the correct format")
+                    except Exception as e:
+                        # any other errors that may occur with connections
+                        logger.error(f"Connection error with {self.address}: {str(e)}")
                     
                 except json.JSONDecodeError:
                     logger.error(f"Invalid JSON format from {self.address}")
@@ -192,24 +241,6 @@ class TCPServer:
         if self.server_socket:
             self.server_socket.close()
         logger.info("Server stopped")
-
-    #updated recieve_image function
-    def receive_image(self, filename, filesize): #takes in filename and size
-        os.makedirs("Stored_Images", exist_ok=True) #making a directory to store images from client
-        save_path = os.path.join("Stored_Images", filename) #saiving images to that direcotry 
-        
-        with open(filename, 'wb') as f: #opens in binary 
-            data = self.client_socket.recv(filesize)
-            f.write(data) #saving and writing images
-
-            try:                    #loading and calling model for prediction of image on path 
-                predicted_class, _ = load_and_predict("imageclassiferHS_Updated.h5", save_path)
-                
-                #prediction check 
-                return {"status": "success", "prediction": predicted_class}
-            except Exception as e:
-                return {"status": "error", "message": str(e)}
-
 
 if __name__ == "__main__":
     # Start the server

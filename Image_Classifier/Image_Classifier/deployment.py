@@ -4,7 +4,7 @@ from tensorflow.keras.models import load_model
 import numpy as np
 
 # loading the h5 model for juypter 
-model_path = '/Users/alexabowman/proj4/Project4-Sec1-Group9/Image_Classifier/Image_Classifier/imageclassiferHS_Updated.h5'
+model_path = './Image_Classifier/Image_Classifier/imageclassiferHS_Updated.h5'
 
 # function definition
 def load_and_predict(model_path, img_path, target_size=(256, 256)): #images are 256, 256
@@ -33,17 +33,13 @@ def load_and_predict(model_path, img_path, target_size=(256, 256)): #images are 
     
     # printing result
     print(f"Predicted Class: {predicted_class}")
-    return predicted_class, predictions
+    return predicted_class
 
-# test data
-#un comment to test 
-img_path = '/Users/alexabowman/proj4/Project4-Sec1-Group9/Image_Classifier/Image_Classifier/test_image.jpg'
-#img_path = '/Users/alexabowman/proj4/Project4-Sec1-Group9/Image_Classifier/Image_Classifier/test_image1.jpg'
-#img_path = '/Users/alexabowman/proj4/Project4-Sec1-Group9/Image_Classifier/Image_Classifier/test_image2.jpg'
-#img_path = '/Users/alexabowman/proj4/Project4-Sec1-Group9/Image_Classifier/Image_Classifier/test_image3.jpg'
+
+
 
 #sample function call 
-predicted_class, predictions = load_and_predict(model_path, img_path)
+#predicted_class, predictions = load_and_predict(model_path, img_path)
 
 
 

@@ -79,3 +79,22 @@
     max-height: 250px;
     border-radius: 4px;
 }
+
+
+
+/* comment modal */
+#modalImage {
+    max-height: 600px;
+    width: 100%;       
+    object-fit: contain;
+  }
+
+  .comment-modal {
+    max-width: 800px; 
+    width: 80%;      
+  }
+
+.comment{
+    background-color: rgba(143, 52, 229, 0.144);
+    border-radius: 10px;
+}

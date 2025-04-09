@@ -3,57 +3,19 @@ from Client.tcp_client import TCPClient
 import time
 import base64
 
+from comment_manager import CommentManager
+from image_manager import ImageManager
+
 app = Flask(__name__)
 
 # Create a global client instance
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
-#temporary for now, we will need to set up the getting of images through the server
-def get_homepage_images():
-    # Use TCP client to fetch images
-    success, response = tcp_client.send_request("GET_IMAGES", {})
-    
-    if success:
-        # In a real implementation, response would contain the images
-        # For now, return the static list
-        return [
-            {"id": 1, "url": "./static/images/1.jpg", "caption": "caption for image 1", "category": "category 1"},
-            {"id": 2, "url": "./static/images/2.jpg", "caption": "caption for image 2", "category": "category 1"},
-            {"id": 3, "url": "./static/images/3.jpg", "caption": "caption for image 3", "category": "category 1"},
-            {"id": 4, "url": "./static/images/4.jpg", "caption": "caption for image 4", "category": "category 1"},
-            {"id": 5, "url": "./static/images/5.jpg", "caption": "caption for image 5", "category": "category 1"},
-            {"id": 6, "url": "./static/images/6.jpg", "caption": "caption for image 6", "category": "category 1"},
-            {"id": 7, "url": "./static/images/7.jpg", "caption": "caption for image 7", "category": "category 1"},
-            {"id": 8, "url": "./static/images/8.jpg", "caption": "caption for image 8", "category": "category 1"},
-        ]
-    else:
-        # Log the error
-        app.logger.error(f"Failed to get images: {response}")
-        return []
+#initialize the managers 
+comment_manager = CommentManager()
+image_manager = ImageManager()
 
-def get_saved_images(username):
-    # Use TCP client to fetch saved images
-    success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
-    
-    if success:
-        # In a real implementation, response would contain the saved images
-        # For now, return the static list
-        return [
-            {"id": 1, "url": "./static/images/9.jpg", "caption": "caption for image 1", "category": "category 1"},
-            {"id": 2, "url": "./static/images/10.jpg", "caption": "caption for image 2", "category": "category 1"},
-            {"id": 3, "url": "./static/images/11.jpg", "caption": "caption for image 3", "category": "category 1"},
-            {"id": 4, "url": "./static/images/8.jpg", "caption": "caption for image 4", "category": "category 1"}
-        ]
-    else:
-        # Log the error
-        app.logger.error(f"Failed to get saved images: {response}")
-        return []
-
-#home page
-@app.route('/home')
-def index():
-    images = get_homepage_images()
-    return render_template('index.html', images=images)
+upload_images = []
 
 #login page
 @app.route('/')
@@ -76,18 +38,42 @@ def process_login():
         return redirect(url_for('index'))
     else:
         return render_template('login.html', error="Login failed")
+    
+#home page
+@app.route('/home')
+def index():
+    # Use TCP client to fetch images
+    # success, response = tcp_client.send_request("GET_IMAGES", {})
+    images = image_manager.get_images()
+    return render_template('index.html', images=images)
+
 
 #saved page 
 @app.route('/saved')
 def saved():
-    username = "TestUser"
-    images = get_saved_images(username)
+    # Use TCP client to fetch saved images
+    # success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
+    username = "Andy"
+    images = image_manager.get_saved_images(username)
     return render_template('saved-section.html', images=images, username=username)
+
+#when clicking the saved button on an image, copy it to the saved section
+@app.route('/save_image', methods=['POST'])
+def save_image():
+    image_id = request.json.get('image_id')
+    username = "Andy" 
+
+    image = image_manager.get_image_by_id(image_id)
+    if image:
+        image_manager.save_image_for_user(image, username)
+        return jsonify({"success": True, "message": "Image saved to your vault!!"})
+
+    return jsonify({"success": False, "message": "Couldn't save this image. Please try again later"})
 
 #profile page
 @app.route('/profile')
 def profile():
-    username = "TestUser"
+    username = "Andy"
     return render_template('profile.html', username=username)
 
 #image uploads
@@ -100,34 +86,36 @@ def upload_image():
     caption = request.form.get('caption')
     tags = request.form.get('tags')
     
-    #handles case where no file is selected
-    if image.filename == '':
-        return 'empty string, no selected file', 400
+    image_data, error = image_manager.upload_image(image, caption, tags)
+    if error:
+        return error, 400
     
-    #need to encode the image to base64 to be able to actually send it
-    #find info here: https://docs.python.org/3/library/base64.html
-    image_content = image.read()
-    base64_image = base64.b64encode(image_content).decode('utf-8')
-
-    data = {
-        'filename': image.filename,
-        'caption': caption,
-        'tags': tags,
-        'image': base64_image
-    }
-
-    success, response = tcp_client.send_request("UPLOAD_IMAGE", data)
-
+    success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
     if success:
-        return jsonify({
-            'filename': image.filename,
-            'caption': caption,
-            'tags': tags
-        })
+        return redirect(url_for('index'))
     else:
         return jsonify({'status': 'error', 'message': response})
 
+#comment handleing routes
+#to get the comments for a specific post
+@app.route('/api/comments/<int:image_id>')
+def get_comments_for_img(image_id):
+    image_comments = comment_manager.get_comments(image_id)
+    return jsonify({"success": True, "comments": image_comments})
 
+#save a newly written comment
+@app.route('/api/comments', methods=['POST'])
+def save_comment():
+    data = request.json
+    if not data or 'imageId' not in data or 'text' not in data:
+        return jsonify({"success": False, "message": "fill out all required fields"})
+
+    image_id = data['imageId']
+    comment_text = data['text']
+    
+    result = comment_manager.save_comment(image_id, comment_text)
+    
+    return jsonify(result)
 
 
 # API endpoint to check TCP connection

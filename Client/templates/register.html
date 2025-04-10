@@ -1,42 +1,5 @@
 {% extends "base.html" %}
 
-<<<<<<< Updated upstream
-{% block content %}
-<body class="login">
-    <div class="logpg py-5">
-        <h1 class="d-flex justify-content-center py-3">AFTERMATH NETWORK</h1>
-        <h2 class="d-flex justify-content-center">REGISTER</h2>
-        <div class="d-flex justify-content-center">
-            <form action="{{ url_for('process_register') }}" method="POST" class="w-50 p-5 formbg">
-                {% if error %}
-                <div class="alert alert-danger">{{ error }}</div>
-                {% endif %}
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" class="form-control" id="username" name="username" placeholder="Choose a username" required>
-                </div>
-                <div class="form-group my-3">
-                    <label for="email">Email (Optional)</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email">
-                </div>
-                <div class="form-group my-3">
-                    <label for="password">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" placeholder="Create a password" required>
-                </div>
-                <div class="form-group my-3">
-                    <label for="confirm-password">Confirm Password</label>
-                    <input type="password" class="form-control" id="confirm-password" name="confirm-password" placeholder="Repeat your password" required>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <button type="submit" class="btn btn-primary my-3">Register</button>
-                    <a href="{{ url_for('login') }}" class="btn btn-secondary my-3">Back to Login</a>
-                </div>
-            </form>
-        </div>
-    </div>
-</body>
-{% endblock %}
-=======
 {% block title %}Aftermath Network - Register{% endblock %}
 
 {% block extra_css %}
@@ -93,4 +56,3 @@
 </div>
 {% endblock %}
 
->>>>>>> Stashed changes

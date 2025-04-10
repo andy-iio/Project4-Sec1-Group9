@@ -5,13 +5,8 @@ import logging
 import hashlib
 import time
 from datetime import datetime
-<<<<<<< Updated upstream
-from database import PreppersDB  
-# Set up logging
-=======
 
 # Logging structure 
->>>>>>> Stashed changes
 logging.basicConfig(
     filename='server_log.txt',
     filemode='w',
@@ -81,19 +76,6 @@ class TCPServerConnection:
                         self.send_error("Missing checksum")
                         continue
                     
-<<<<<<< Updated upstream
-                    # Process the command
-                    command = packet['body'].get('command', '')
-                    data = packet['body'].get('data', {})
-                    
-                    # Handle different command types
-                    response_data = self.process_command(command, data)
-                    
-                    # Create and send response
-                    response = self.create_packet(response_data['command'], response_data['data'])
-                    self.client_socket.sendall(json.dumps(response).encode('utf-8'))
-                    logger.info(f"Sent response to {self.address}: {response_data['command']}")
-=======
                     
                     command = packet['body'].get('command')
                     data = packet['body'].get('data', {})
@@ -111,7 +93,6 @@ class TCPServerConnection:
                     response_json = json.dumps(echo_response)
                     self.client_socket.sendall(response_json.encode('utf-8'))
                     logger.info(f"SENT RESPONSE: ECHO (seq: {echo_response['header']['sequence_number']}) to {self.address}")
->>>>>>> Stashed changes
                     
                 except json.JSONDecodeError:
                     logger.error(f"Invalid JSON format from {self.address}")
@@ -389,12 +370,7 @@ class TCPServer:
                 logger.info(f"New client connected: {client_address}")
                 
                 
-<<<<<<< Updated upstream
-                # Create client handler with database access
-                client_handler = TCPServerConnection(client_socket, client_address, self.db)
-=======
                 client_handler = TCPServerConnection(client_socket, client_address)
->>>>>>> Stashed changes
                 
                 # Start a thread to handle the client
                 client_thread = threading.Thread(target=client_handler.handle_request)
@@ -417,16 +393,6 @@ class TCPServer:
 
 
 if __name__ == "__main__":
-<<<<<<< Updated upstream
-    # This is just for testing 
-    from database import PreppersDB
-    
-    # Initialize database
-    db = PreppersDB()
-    
-    # Start the server
-    server = TCPServer(port=5001, db=db)
-=======
 
     print("\n")
     print("#" * 70)
@@ -436,5 +402,4 @@ if __name__ == "__main__":
     print("#" * 70)
     
     server = TCPServer(port=5001)
->>>>>>> Stashed changes
     server.start()

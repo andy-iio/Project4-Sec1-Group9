@@ -4,11 +4,7 @@ import logging
 import hashlib
 import time
 
-<<<<<<< Updated upstream
-# Logging txt
-=======
 # Logging structure for btoh clent and server
->>>>>>> Stashed changes
 logging.basicConfig(
     filename='client_log.txt',
     filemode='w',

@@ -1,10 +1,12 @@
 from flask import Flask
 import threading
 from tcp_server import TCPServer
-
+from database import Database
 
 app = Flask(__name__)
 
+# Initialize the database
+db = Database()
 
 # Initialize the socket server
 socket_server = None
@@ -21,10 +23,6 @@ def start_socket_server():
     socket_server = TCPServer(port=5001, db=db)
     socket_server.start()
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 if __name__ == '__main__':
     # Start the socket server in a separate thread
     print("\n")

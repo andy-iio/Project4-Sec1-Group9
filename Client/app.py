@@ -182,7 +182,6 @@ def profile():
 def upload_image():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-<<<<<<< Updated upstream
     
     if 'image' not in request.files:
         return 'No file provided', 400
@@ -192,17 +191,6 @@ def upload_image():
     caption = request.form.get('caption', '')
     tags = request.form.get('tags', '')
     
-=======
-    
-    if 'image' not in request.files:
-        return 'No file provided', 400
-    
-    
-    image = request.files['image']
-    caption = request.form.get('caption')
-    tags = request.form.get('tags')
-    
->>>>>>> Stashed changes
     if image.filename == '':
         return 'No selected file', 400
     
@@ -246,54 +234,6 @@ def upload_image():
             error_message = response['body']['data']['message']
         return jsonify({'status': 'error', 'message': error_message})
 
-<<<<<<< Updated upstream
-# Save an image
-@app.route('/api/save_image', methods=['POST'])
-def save_image():
-    if 'user_id' not in session:
-        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
-        
-    image_id = request.json.get('image_id')
-    
-    if not image_id:
-        return jsonify({'status': 'error', 'message': 'No image ID provided'}), 400
-    
-    success, response = tcp_client.send_request("SAVE_IMAGE", {
-        'user_id': session['user_id'],
-        'image_id': image_id
-    })
-    
-    if success and response['body']['command'] == 'SAVE_IMAGE_SUCCESS':
-        return jsonify({'status': 'success'})
-    else:
-        error_message = "Failed to save image"
-        if 'message' in response['body']['data']:
-            error_message = response['body']['data']['message']
-        return jsonify({'status': 'error', 'message': error_message})
-
-# Unsave an image
-@app.route('/api/unsave_image', methods=['POST'])
-def unsave_image():
-    if 'user_id' not in session:
-        return jsonify({'status': 'error', 'message': 'Not logged in'}), 401
-        
-    image_id = request.json.get('image_id')
-    
-    if not image_id:
-        return jsonify({'status': 'error', 'message': 'No image ID provided'}), 400
-    
-    success, response = tcp_client.send_request("UNSAVE_IMAGE", {
-        'user_id': session['user_id'],
-        'image_id': image_id
-    })
-    
-    if success and response['body']['command'] == 'UNSAVE_IMAGE_SUCCESS':
-        return jsonify({'status': 'success'})
-    else:
-        return jsonify({'status': 'error', 'message': 'Failed to unsave image'})
-
-# API endpoint to check TCP connection
-=======
 @app.route('/api/comments/<int:image_id>')
 def get_comments_for_img(image_id):
     comments = db.get_comments(image_id)
@@ -327,7 +267,6 @@ def save_comment():
     else:
         return jsonify({"success": False, "message": "Failed to post comment"})
 
->>>>>>> Stashed changes
 @app.route('/api/check_connection')
 def check_connection():
     if not tcp_client.connected:

@@ -6,7 +6,7 @@ import os
 from database import Database
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24) 
+app.secret_key = os.urandom(24)  
 
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
@@ -29,11 +29,9 @@ def register():
         if not username or not password:
             return render_template('register.html', error="Username and password are required")
         
-        # Create the user in the database
         success, result = db.create_user(username, password, email)
         
         if success:
-            # Log the successful registration
             print(f"User registered: {username}")
             tcp_client.send_request("REGISTER", {
                 "username": username,
@@ -55,11 +53,9 @@ def process_login():
     if not username or not password:
         return render_template('login.html', error="Username and password are required")
     
-    # Authenticate user
     success, user_id = db.authenticate_user(username, password)
     
     if success:
-        # Set user session
         session['user_id'] = user_id
         session['username'] = username
         
@@ -82,20 +78,17 @@ def logout():
 
 @app.route('/home')
 def index():
-    # Check if user is logged in
+    
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    # Get all images from database
     images = db.get_all_images()
     
     user = db.get_user(session['user_id'])
     
-    # For each image, check if it's saved by the current user
     for image in images:
         image['is_saved'] = db.is_image_saved_by_user(session['user_id'], image['id'])
     
-    # Get all unique categories
     categories = []
     for image in images:
         if image['category'] and image['category'] not in categories:
@@ -105,11 +98,13 @@ def index():
 
 @app.route('/saved')
 def saved():
+  
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     images = db.get_saved_images(session['user_id'])
     
+
     user = db.get_user(session['user_id'])
     
     categories = []
@@ -121,16 +116,16 @@ def saved():
 
 @app.route('/save_image', methods=['POST'])
 def save_image():
-    # Check if user is logged in
+  
     if 'user_id' not in session:
         return jsonify({"success": False, "message": "You must be logged in to save images"})
     
     image_id = request.json.get('image_id')
     
-    # Save the image for the user
     success = db.save_image_for_user(session['user_id'], image_id)
     
     if success:
+    
         tcp_client.send_request("SAVE_IMAGE", {
             "user_id": session['user_id'],
             "image_id": image_id
@@ -142,7 +137,7 @@ def save_image():
 
 @app.route('/unsave_image', methods=['POST'])
 def unsave_image():
-    # Check if user is logged in
+
     if 'user_id' not in session:
         return jsonify({"success": False, "message": "You must be logged in to unsave images"})
     
@@ -151,6 +146,7 @@ def unsave_image():
     success = db.unsave_image_for_user(session['user_id'], image_id)
     
     if success:
+       
         tcp_client.send_request("UNSAVE_IMAGE", {
             "user_id": session['user_id'],
             "image_id": image_id
@@ -162,12 +158,13 @@ def unsave_image():
 
 @app.route('/profile')
 def profile():
+    # Check if user is logged in
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     user = db.get_user(session['user_id'])
     
-    # use count to track for user stats
+    # Get counts for user stats
     saved_count = db.get_saved_count(session['user_id'])
     uploaded_count = db.get_uploaded_count(session['user_id'])
     comment_count = db.get_comment_count(session['user_id'])
@@ -180,21 +177,21 @@ def profile():
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
+    
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     if 'image' not in request.files:
         return 'No file provided', 400
     
-    
     image = request.files['image']
-    caption = request.form.get('caption', '')
-    tags = request.form.get('tags', '')
+    caption = request.form.get('caption')
+    tags = request.form.get('tags')
     
     if image.filename == '':
         return 'No selected file', 400
     
-    # Save the uplaoded iamges  to uploads folder
+    # Save the file to uploads folder
     image_content = image.read()
     image_filename = image.filename
     upload_folder = './static/uploads'
@@ -210,11 +207,10 @@ def upload_image():
     # Encode image to base64 
     base64_image = base64.b64encode(image_content).decode('utf-8')
     
-    # Save image to database
+   
     image_url = f"./static/uploads/{image_filename}"
     image_id = db.upload_image(image_url, caption, tags, session['user_id'], base64_image)
     
-    # Use TCP client to notify server
     image_data = {
         "id": image_id,
         "url": image_url,
@@ -229,10 +225,7 @@ def upload_image():
     if success:
         return redirect(url_for('index'))
     else:
-        error_message = "Upload failed"
-        if 'message' in response['body']['data']:
-            error_message = response['body']['data']['message']
-        return jsonify({'status': 'error', 'message': error_message})
+        return jsonify({'status': 'error', 'message': response})
 
 @app.route('/api/comments/<int:image_id>')
 def get_comments_for_img(image_id):
@@ -242,7 +235,7 @@ def get_comments_for_img(image_id):
 
 @app.route('/api/comments', methods=['POST'])
 def save_comment():
-    # Check if user is logged in
+   
     if 'user_id' not in session:
         return jsonify({"success": False, "message": "You must be logged in to comment"})
     
@@ -252,11 +245,11 @@ def save_comment():
 
     image_id = data['imageId']
     comment_text = data['text']
-    
+
     success = db.add_comment(image_id, comment_text, session['user_id'])
     
     if success:
-        # Use client to notify server
+        
         tcp_client.send_request("ADD_COMMENT", {
             "user_id": session['user_id'],
             "image_id": image_id,
@@ -273,7 +266,6 @@ def check_connection():
         if not tcp_client.connect():
             return jsonify({"status": "disconnected", "message": "Failed to connect to server"})
     
-    
     success, response = tcp_client.send_request("PING", {"timestamp": time.time()})
     
     if success:
@@ -289,7 +281,7 @@ def check_connection():
         })
 
 if __name__ == '__main__':
-  
+    
     print("\n")
     print("#" * 70)
     print("CONNECTING TO TCP SERVER ON PORT 5001")

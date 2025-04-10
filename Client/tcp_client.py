@@ -4,15 +4,29 @@ import logging
 import hashlib
 import time
 
+<<<<<<< Updated upstream
 # Logging txt
+=======
+# Logging structure for btoh clent and server
+>>>>>>> Stashed changes
 logging.basicConfig(
     filename='client_log.txt',
     filemode='w',
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - TCPClient - %(levelname)s - %(message)s'
 )
 
 logger = logging.getLogger('TCPClient')
+
+# tried to add a filter to exclude static file requests from logs(kind of works)
+class FilterStaticRequests(logging.Filter):
+    def filter(self, record):
+        if hasattr(record, 'msg') and isinstance(record.msg, str):
+            if '/static/' in record.msg or 'GET /static' in record.msg:
+                return False
+        return True
+
+logger.addFilter(FilterStaticRequests())
 
 class TCPClient:
     """
@@ -56,7 +70,7 @@ class TCPClient:
         if not self.connected:
             if not self.connect():
                 return False, "Failed to connect to server"
-        
+                
         # Create request packet
         packet = self.create_packet(command, data)
         
@@ -64,16 +78,35 @@ class TCPClient:
         try:
             packet_json = json.dumps(packet)
             self.socket.sendall(packet_json.encode('utf-8'))
-            logger.info(f"Sent request: {command} with {len(packet_json)} bytes")
             
-            # Wait for response
+         
+            logger.info(f"SENDING REQUEST TO SERVER: Command={command}")
+            
+            # For important commands it will  log more details
+            if command in ["LOGIN", "REGISTER", "LOGOUT", "SAVE_IMAGE", "UNSAVE_IMAGE", "UPLOAD_IMAGE", "ADD_COMMENT"]:
+                if command == "LOGIN":
+                    logger.info(f"User '{data.get('username')}' logging in")
+                elif command == "REGISTER":
+                    logger.info(f"New user '{data.get('username')}' registering")
+                elif command == "LOGOUT":
+                    logger.info(f"User logging out")
+                elif command == "SAVE_IMAGE":
+                    logger.info(f"Saving image ID: {data.get('image_id')}")
+                elif command == "UNSAVE_IMAGE":
+                    logger.info(f"Removing saved image ID: {data.get('image_id')}")
+                elif command == "UPLOAD_IMAGE":
+                    logger.info(f"Uploading new image with caption: {data.get('caption')}")
+                elif command == "ADD_COMMENT":
+                    logger.info(f"Adding comment to image ID: {data.get('image_id')}")
+            
+            # Wait for response from the server to then log it
             response = self.receive_response()
             
             if response:
-                logger.info(f"Received response: {response['body']['command']}")
+                logger.info(f"RECEIVED RESPONSE FROM SERVER: {response['body']['command']}")
                 return True, response
             else:
-                logger.warning("No response from server")
+                logger.warning("No response received from server")
                 return False, "No response from server"
                 
         except Exception as e:
@@ -127,15 +160,15 @@ class TCPClient:
                 logger.warning("Received empty response from server")
                 return None
                 
-            # Parse response
+           
             response = json.loads(data)
             
-            # Valid8 header
+            # Validate header
             if 'header' not in response:
                 logger.warning("Invalid response format - missing header")
                 return None
                 
-            # Valid8 checksum
+            # Validate checksum
             if 'footer' in response and 'checksum' in response['footer']:
                 if not self.validate_checksum(json.dumps(response['body']), response['footer']['checksum']):
                     logger.warning("Response checksum validation failed")
@@ -155,28 +188,3 @@ class TCPClient:
         except Exception as e:
             logger.error(f"Error receiving response: {str(e)}")
             return None
-
-# Example ( testing)
-if __name__ == "__main__":
-    # Create client
-    client = TCPClient()
-    
-    # Connect to server
-    if not client.connect():
-        print("Failed to connect to server")
-        exit(1)
-    
-    # Send a test request
-    success, response = client.send_request("TEST", {
-        "message": "Hello, server!",
-        "timestamp": time.time()
-    })
-    
-    if success:
-        print("Request successful!")
-        print(f"Response: {response['body']['data'].get('message', 'No message')}")
-    else:
-        print(f"Request failed: {response}")
-    
-   
-    client.disconnect()

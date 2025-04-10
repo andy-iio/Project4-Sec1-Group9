@@ -5,13 +5,18 @@ import logging
 import hashlib
 import time
 from datetime import datetime
+<<<<<<< Updated upstream
 from database import PreppersDB  
 # Set up logging
+=======
+
+# Logging structure 
+>>>>>>> Stashed changes
 logging.basicConfig(
     filename='server_log.txt',
     filemode='w',
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - TCPServer - %(levelname)s - %(message)s'
 )
 
 logger = logging.getLogger('TCPServer')
@@ -41,22 +46,24 @@ class TCPServerConnection:
         try:
             logger.info(f"Connection established with {self.address}")
             
-            # Main request handling loop
+            
             while True:
                 data = self.client_socket.recv(4096).decode('utf-8')
                 if not data:
                     break
                     
                 logger.info(f"Received data from {self.address}: {data[:100]}...")
-                
+                    
                 try:
-                    # Parse the received packet
+                 
                     packet = json.loads(data)
                     
-                    # Log packet header details
-                    if 'header' in packet:
-                        logger.info(f"Request from {self.address}: Source={packet['header'].get('source')}, "
-                                    f"Command={packet['body'].get('command') if 'body' in packet else 'unknown'}")
+                    # Log packet header details with command info
+                    if 'header' in packet and 'body' in packet and 'command' in packet['body']:
+                        cmd = packet['body']['command']
+                        seq = packet['header'].get('sequence_number', 'unknown')
+                        src = packet['header'].get('source', 'unknown')
+                        logger.info(f"REQUEST from {self.address}: Source={src}, Command={cmd}, Sequence={seq}")
                     
                     # Validate header
                     if 'header' not in packet:
@@ -74,6 +81,7 @@ class TCPServerConnection:
                         self.send_error("Missing checksum")
                         continue
                     
+<<<<<<< Updated upstream
                     # Process the command
                     command = packet['body'].get('command', '')
                     data = packet['body'].get('data', {})
@@ -85,6 +93,25 @@ class TCPServerConnection:
                     response = self.create_packet(response_data['command'], response_data['data'])
                     self.client_socket.sendall(json.dumps(response).encode('utf-8'))
                     logger.info(f"Sent response to {self.address}: {response_data['command']}")
+=======
+                    
+                    command = packet['body'].get('command')
+                    data = packet['body'].get('data', {})
+                    
+                   
+                    logger.info(f"Successfully processed command '{command}' from {self.address}")
+                    
+                    # Echo the request back to the client
+                    echo_response = self.create_packet("ECHO", {
+                        "message": "Server received your request",
+                        "original_command": command,
+                        "timestamp": datetime.now().isoformat()
+                    })
+                    
+                    response_json = json.dumps(echo_response)
+                    self.client_socket.sendall(response_json.encode('utf-8'))
+                    logger.info(f"SENT RESPONSE: ECHO (seq: {echo_response['header']['sequence_number']}) to {self.address}")
+>>>>>>> Stashed changes
                     
                 except json.JSONDecodeError:
                     logger.error(f"Invalid JSON format from {self.address}")
@@ -92,7 +119,7 @@ class TCPServerConnection:
                 except Exception as e:
                     logger.error(f"Error processing request from {self.address}: {str(e)}")
                     self.send_error(f"Error processing request: {str(e)}")
-                
+            
         except Exception as e:
             logger.error(f"Connection error with {self.address}: {str(e)}")
         finally:
@@ -359,9 +386,15 @@ class TCPServer:
             # Accept connections
             while self.running:
                 client_socket, client_address = self.server_socket.accept()
+                logger.info(f"New client connected: {client_address}")
                 
+                
+<<<<<<< Updated upstream
                 # Create client handler with database access
                 client_handler = TCPServerConnection(client_socket, client_address, self.db)
+=======
+                client_handler = TCPServerConnection(client_socket, client_address)
+>>>>>>> Stashed changes
                 
                 # Start a thread to handle the client
                 client_thread = threading.Thread(target=client_handler.handle_request)
@@ -384,6 +417,7 @@ class TCPServer:
 
 
 if __name__ == "__main__":
+<<<<<<< Updated upstream
     # This is just for testing 
     from database import PreppersDB
     
@@ -392,4 +426,15 @@ if __name__ == "__main__":
     
     # Start the server
     server = TCPServer(port=5001, db=db)
+=======
+
+    print("\n")
+    print("#" * 70)
+    print("STARTING TCP SERVER ON PORT 5001")
+    print("#" * 70)
+    print("Log messages will be saved to server_log.txt")
+    print("#" * 70)
+    
+    server = TCPServer(port=5001)
+>>>>>>> Stashed changes
     server.start()

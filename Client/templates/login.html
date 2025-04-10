@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+<<<<<<< Updated upstream
 {% block content %}
 <body class="login">
     <div class="logpg py-5">
@@ -27,3 +28,57 @@
     </div>
 </body>
 {% endblock %}
+=======
+{% block title %}Aftermath Network - Login{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-image: url('../static/images/bg.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 100vh;
+    }
+    
+    .container.mt-4 {
+        background-color: transparent;
+        box-shadow: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logpg py-5">
+    <h1 class="d-flex justify-content-center py-3">AFTERMATH NETWORK</h1>
+    <h2 class="d-flex justify-content-center">LOGIN</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger d-flex justify-content-center">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <div class="d-flex justify-content-center">
+        <form class="w-50 p-5 formbg" action="{{ url_for('process_login') }}" method="post">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Enter username" required>
+            </div>
+            
+            <div class="form-group my-3">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary my-3">Login</button>
+            <div class="mt-3">
+                <a href="{{ url_for('register') }}" class="btn btn-secondary">Register New Account</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+
+>>>>>>> Stashed changes

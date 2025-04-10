@@ -182,6 +182,7 @@ def profile():
 def upload_image():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+<<<<<<< Updated upstream
     
     if 'image' not in request.files:
         return 'No file provided', 400
@@ -191,6 +192,17 @@ def upload_image():
     caption = request.form.get('caption', '')
     tags = request.form.get('tags', '')
     
+=======
+    
+    if 'image' not in request.files:
+        return 'No file provided', 400
+    
+    
+    image = request.files['image']
+    caption = request.form.get('caption')
+    tags = request.form.get('tags')
+    
+>>>>>>> Stashed changes
     if image.filename == '':
         return 'No selected file', 400
     
@@ -234,6 +246,7 @@ def upload_image():
             error_message = response['body']['data']['message']
         return jsonify({'status': 'error', 'message': error_message})
 
+<<<<<<< Updated upstream
 # Save an image
 @app.route('/api/save_image', methods=['POST'])
 def save_image():
@@ -280,6 +293,41 @@ def unsave_image():
         return jsonify({'status': 'error', 'message': 'Failed to unsave image'})
 
 # API endpoint to check TCP connection
+=======
+@app.route('/api/comments/<int:image_id>')
+def get_comments_for_img(image_id):
+    comments = db.get_comments(image_id)
+    
+    return jsonify({"success": True, "comments": comments})
+
+@app.route('/api/comments', methods=['POST'])
+def save_comment():
+    # Check if user is logged in
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "You must be logged in to comment"})
+    
+    data = request.json
+    if not data or 'imageId' not in data or 'text' not in data:
+        return jsonify({"success": False, "message": "Fill out all required fields"})
+
+    image_id = data['imageId']
+    comment_text = data['text']
+    
+    success = db.add_comment(image_id, comment_text, session['user_id'])
+    
+    if success:
+        # Use client to notify server
+        tcp_client.send_request("ADD_COMMENT", {
+            "user_id": session['user_id'],
+            "image_id": image_id,
+            "text": comment_text
+        })
+        
+        return jsonify({"success": True, "message": "Comment posted!!"})
+    else:
+        return jsonify({"success": False, "message": "Failed to post comment"})
+
+>>>>>>> Stashed changes
 @app.route('/api/check_connection')
 def check_connection():
     if not tcp_client.connected:

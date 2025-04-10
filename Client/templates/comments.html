@@ -1,0 +1,37 @@
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog comment-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imageModalLabel">img caption</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6">
+              <img src="" id="modalImage" class="img-fluid">
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <span class="badge bg-primary" id="imageCategory">category</span>
+              </div>
+              <div class="comments-section mb-3">
+                <h6>Comments</h6>
+                <div id="commentsList" class="mb-3">
+                  <!--comments load up here -->
+                </div>
+                <form id="commentForm">
+                  <input type="hidden" id="imageId" name="imageId" value="">
+                  <div class="mb-3">
+                    <textarea class="form-control" id="commentText" rows="3" placeholder="Add a comment..."></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Post Comment</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/comment-script.js') }}"></script>

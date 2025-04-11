@@ -1,0 +1,54 @@
+.S-Button {
+    background-color: green;
+    
+    font-size: 100px;  /* Increases text size */
+    color: black;
+    
+    width: 50px;  /* Set a fixed width */
+    height: 50px;  /* Set a fixed height */
+    border-radius: 10px;
+    border-color: white;
+    padding: 15px 30px;  /* Increases button size */
+    
+    cursor: pointer;
+    
+    position: relative;
+    left: 1000px; /* move right */
+    top: -170px;   /* move down */
+    
+    margin-right: 70px;
+}
+
+.E-Button {
+    background-color: red;
+    
+    font-size: 100px;  /* Increases text size */
+    color: black;
+    
+    width: 50px;  /* Set a fixed width */
+    height: 50px;  /* Set a fixed height */
+    border-radius: 10px;
+    border-color: white;
+    padding: 15px 30px;  /* Increases button size */
+    
+    cursor: pointer;
+    
+    position: relative;
+    left: 865px; /* move right */
+    top: -60px;   /* move down */
+    
+    margin-right: 70px;
+}
+ 
+.square {
+    width: 500px;
+    height: 500px;
+    background-color: whitesmoke;
+    position: relative;
+    left: 0px;
+    top: -200px;
+    border-radius: 10px;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2), -px -3px 10px rgba(0, 0, 0, 0.5);
+    font-size: 20px;
+    color: blue; 
+}

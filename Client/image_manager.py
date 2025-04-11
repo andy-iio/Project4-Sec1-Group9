@@ -51,7 +51,10 @@ class ImageManager:
         with open(image_path, 'wb') as f:
             f.write(image_content)
 
-        model_path = './Image_Classifier/Image_Classifier/imageclassiferHS_Updated.h5'
+        base_dir = os.path.dirname(os.path.abspath(__file__))  # path to image_manager.py
+        model_path = os.path.join(base_dir, "../Image_Classifier/Image_Classifier/imageclassifierHS_Updated.h5")
+        model_path = os.path.normpath(model_path)
+
 
         image_path = f"./static/uploads/{image_filename}"
         predicted_category = load_and_predict(model_path, image_path)

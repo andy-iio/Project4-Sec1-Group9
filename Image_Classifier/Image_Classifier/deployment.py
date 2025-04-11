@@ -4,7 +4,7 @@ from tensorflow.keras.models import load_model
 import numpy as np
 
 # loading the h5 model for juypter 
-model_path = './Image_Classifier/Image_Classifier/imageclassiferHS_Updated.h5'
+model_path = './Image_Classifier/Image_Classifier/imageclassifierHS_Updated.h5'
 
 # function definition
 def load_and_predict(model_path, img_path, target_size=(256, 256)): #images are 256, 256

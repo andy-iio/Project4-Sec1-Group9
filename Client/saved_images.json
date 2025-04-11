@@ -17,6 +17,12 @@
             "url": "./static/images/3.jpg",
             "caption": "Amazing Survival Recipes",
             "category": "Meal Prep"
+        },
+        {
+            "id": 6,
+            "url": "./static/images/6.jpg",
+            "caption": "World War 3 is Coming, are you Prepared??",
+            "category": "Tips"
         }
     ]
 }

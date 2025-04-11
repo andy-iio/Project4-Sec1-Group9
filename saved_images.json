@@ -1,0 +1,13 @@
+{
+    "test_user": [
+        {
+            "id": 1,
+            "url": "./static/uploads/mock_image.png",
+            "caption": "A saved image",
+            "category": [
+                "saved"
+            ],
+            "image": "saved_base64"
+        }
+    ]
+}

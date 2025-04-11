@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/server.css">
+        <title>TCP Server Control Panel</title>
+    </head>
+    <body style="background-color:black; color: white;">
+        <h1>Control Panel</h1>
+        <h2>Logs</h2>
+        <p id="logs">
+            <pre>Waiting for logs...</pre>
+        </p>
+        
+        <div class="square" id="square">Starting...</div>
+
+        <button class="S-Button" onclick="startServer()">Start Server</button>
+        <button class="E-Button" onclick="stopServer()">Stop Server</button>
+
+        <script>
+        const square = document.getElementById("square");
+        const logsElement = document.getElementById("logs");
+        let isFirstUpdate = true;
+        let lastLogCount = 0;
+
+        // Function to start the server
+        function startServer() {
+            fetch('/start_server', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Server started successfully');
+                    updateLogs();
+                } else {
+                    alert('Failed to start server: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error starting server: ' + error);
+            });
+        }
+
+        // Function to stop the server
+        function stopServer() {
+            fetch('/stop_server', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Server stopped successfully');
+                    updateLogs();
+                } else {
+                    alert('Failed to stop server: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error stopping server: ' + error);
+            });
+        }
+
+        // Function to update logs
+        function updateLogs() {
+            fetch('/get_logs')
+            .then(response => response.json())
+            .then(data => {
+                if (data.logs && data.logs.length > 0) {
+                    // Only update if we have new logs
+                    if (isFirstUpdate || data.logs.length !== lastLogCount) {
+                        let logHtml = '';
+                        data.logs.forEach(log => {
+                            logHtml += `<pre>${log}</pre>`;
+                        });
+                        logsElement.innerHTML = logHtml;
+                        
+                        // Update the square with the most recent log
+                        square.innerHTML = data.logs[data.logs.length - 1];
+                        
+                        // Update tracking variables
+                        isFirstUpdate = false;
+                        lastLogCount = data.logs.length;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching logs:', error);
+            });
+        }
+
+        // Update logs every 10 seconds 
+        setInterval(updateLogs, 10000);
+
+        // Initial update
+        updateLogs();
+        </script>
+    </body>
+</html>

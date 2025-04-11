@@ -5,11 +5,18 @@ import base64
 import os
 from database import Database
 
+from comment_manager import CommentManager
+from image_manager import ImageManager
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  
 
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
+comment_manager = CommentManager()
+image_manager = ImageManager()
+
+upload_images = []
 db = Database()
 
 @app.route('/')
@@ -96,9 +103,10 @@ def index():
     
     return render_template('index.html', images=images, user=user, categories=categories)
 
+
 @app.route('/saved')
 def saved():
-  
+
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
@@ -187,52 +195,27 @@ def upload_image():
     image = request.files['image']
     caption = request.form.get('caption')
     tags = request.form.get('tags')
-    
-    if image.filename == '':
-        return 'No selected file', 400
-    
-    # Save the file to uploads folder
-    image_content = image.read()
-    image_filename = image.filename
-    upload_folder = './static/uploads'
-    
-    if not os.path.exists(upload_folder):
-        os.makedirs(upload_folder)
-    
-    image_path = os.path.join(upload_folder, image_filename)
-    
-    with open(image_path, 'wb') as f:
-        f.write(image_content)
-    
-    # Encode image to base64 
-    base64_image = base64.b64encode(image_content).decode('utf-8')
-    
-   
-    image_url = f"./static/uploads/{image_filename}"
-    image_id = db.upload_image(image_url, caption, tags, session['user_id'], base64_image)
-    
-    image_data = {
-        "id": image_id,
-        "url": image_url,
-        "caption": caption,
-        "category": tags,
-        "user_id": session['user_id'],
-        "image": base64_image
-    }
+
+    image_data, error = image_manager.upload_image(image, caption, tags)
+    if error:
+        return error, 400
     
     success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
-    
+
     if success:
         return redirect(url_for('index'))
     else:
         return jsonify({'status': 'error', 'message': response})
 
+#comment handleing routes
+#to get the comments for a specific post
 @app.route('/api/comments/<int:image_id>')
 def get_comments_for_img(image_id):
     comments = db.get_comments(image_id)
     
     return jsonify({"success": True, "comments": comments})
 
+ #save a newly written comment
 @app.route('/api/comments', methods=['POST'])
 def save_comment():
    
@@ -242,6 +225,7 @@ def save_comment():
     data = request.json
     if not data or 'imageId' not in data or 'text' not in data:
         return jsonify({"success": False, "message": "Fill out all required fields"})
+
 
     image_id = data['imageId']
     comment_text = data['text']

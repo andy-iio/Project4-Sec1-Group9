@@ -38,7 +38,7 @@ class Database:
         """Initialize the database tables if they don't exist"""
         self.connect()
         
-        # Database tables for all teh comamnds and fucntions that will be used
+        # Database tables for all the commands and functions that will be used
         tables = [
             '''CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,6 +56,8 @@ class Database:
                 is_default INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 image_data TEXT,
+                classification_label TEXT,
+                classification_confidence REAL,
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )''',
             '''CREATE TABLE IF NOT EXISTS comments (
@@ -74,28 +76,47 @@ class Database:
                 PRIMARY KEY (user_id, image_id),
                 FOREIGN KEY (user_id) REFERENCES users (id),
                 FOREIGN KEY (image_id) REFERENCES images (id)
+            )''',
+            '''CREATE TABLE IF NOT EXISTS classification_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                image_id INTEGER NOT NULL,
+                label TEXT NOT NULL,
+                confidence REAL NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (image_id) REFERENCES images (id)
             )'''
         ]
         
         for table in tables:
             self.cursor.execute(table)
         
+        try:
+            self.cursor.execute("ALTER TABLE images ADD COLUMN classification_label TEXT")
+            self.log("INFO - Added classification_label column to images table")
+        except sqlite3.OperationalError:
+           
+            pass
+            
+        try:
+            self.cursor.execute("ALTER TABLE images ADD COLUMN classification_confidence REAL")
+            self.log("INFO - Added classification_confidence column to images table")
+        except sqlite3.OperationalError:
+            pass
       
         self._create_default_user()
         
-        # Check if default images exist, if not, create them
         self.cursor.execute("SELECT COUNT(*) FROM images WHERE is_default = 1")
         if self.cursor.fetchone()[0] == 0:
             self._insert_default_data()
             
-        # Import Andy's saved images
+        # Import saved images
         self._import_default_saved_images()
             
         self.commit()
         self.close()
         
         
-        #ACCOUNT ANDY IS USED FOR TESTING PURPOSE AND IS HARDOCDED INTO DATABSE SO TEH DEFAULT IMAGES CAN BE USED
+        #ACCOUNT ANDY IS USED FOR TESTING PURPOSE AND IS HARDOCDED INTO DATABSE SO TEH DEFAULT IMAGES CAN BE USED passowrd is the passwrod
         
         
     def _create_default_user(self):
@@ -104,7 +125,6 @@ class Database:
         user = self.cursor.fetchone()
         
         if not user:
-            # Create the default Andy user with a simple password ('password')
             password_hash = hashlib.sha256('password'.encode()).hexdigest()
             
             self.cursor.execute(
@@ -135,7 +155,7 @@ class Database:
         
         
         self.cursor.executemany(
-            'INSERT INTO images (id, url, caption, category, is_default) VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO images (id, url, caption, category, user_id, is_default) VALUES (?, ?, ?, ?, ?, ?)',
             default_images
         )
         
@@ -251,7 +271,7 @@ class Database:
         self.connect()
         
         self.cursor.execute('''
-        SELECT id, url, caption, category, user_id, is_default, created_at
+        SELECT id, url, caption, category, user_id, is_default, created_at, classification_label, classification_confidence
         FROM images
         ORDER BY is_default DESC, id DESC
         ''')
@@ -266,7 +286,8 @@ class Database:
         self.connect()
         
         self.cursor.execute('''
-        SELECT id, url, caption, category, user_id, is_default, created_at, image_data
+        SELECT id, url, caption, category, user_id, is_default, created_at, image_data, 
+               classification_label, classification_confidence
         FROM images
         WHERE id = ?
         ''', (image_id,))
@@ -278,21 +299,116 @@ class Database:
             return dict(image)
         return None
     
-    def upload_image(self, url, caption, category, user_id=None, image_data=None):
-        """Upload a new image"""
+    def upload_image(self, url, caption, category, user_id=None, image_data=None, classification_label=None, classification_confidence=None):
+        """Upload a new image with classification data"""
         self.connect()
         
-        self.cursor.execute(
-            'INSERT INTO images (url, caption, category, user_id, image_data) VALUES (?, ?, ?, ?, ?)',
-            (url, caption, category, user_id, image_data)
-        )
+        try:
+            self.cursor.execute(
+                'INSERT INTO images (url, caption, category, user_id, image_data, classification_label, classification_confidence) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (url, caption, category, user_id, image_data, classification_label, classification_confidence)
+            )
+            
+            image_id = self.cursor.lastrowid
+           
+            if classification_label and classification_confidence is not None:
+                self.cursor.execute(
+                    'INSERT INTO classification_logs (image_id, label, confidence) VALUES (?, ?, ?)',
+                    (image_id, classification_label, classification_confidence)
+                )
+                
+                self.log(f"INFO - New image ID {image_id} classified as '{classification_label}' with confidence {classification_confidence}")
+            
+            self.commit()
+            self.close()
+            
+            return image_id
+        except Exception as e:
+            self.log(f"ERROR - Failed to upload image: {e}")
+            self.close()
+            return None
+    
+    def update_image_classification(self, image_id, label, confidence):
+        """Update image with classification results"""
+        self.connect()
         
-        image_id = self.cursor.lastrowid
+        try:
+            # Update the image record with classification
+            self.cursor.execute(
+                'UPDATE images SET classification_label = ?, classification_confidence = ? WHERE id = ?',
+                (label, confidence, image_id)
+            )
+            
+            # Log the classification
+            self.cursor.execute(
+                'INSERT INTO classification_logs (image_id, label, confidence) VALUES (?, ?, ?)',
+                (image_id, label, confidence)
+            )
+            
+            self.log(f"INFO - Image ID {image_id} classified as '{label}' with confidence {confidence}")
+            
+            self.commit()
+            self.close()
+            return True
+        except Exception as e:
+            self.log(f"ERROR - Failed to update image classification: {e}")
+            self.close()
+            return False
+    
+    def get_classification_logs(self, image_id=None, limit=50):
+        """Get classification logs, optionally filtered by image_id"""
+        self.connect()
         
-        self.commit()
-        self.close()
+        try:
+            if image_id:
+                self.cursor.execute(
+                    '''SELECT cl.*, i.url, i.caption 
+                       FROM classification_logs cl 
+                       JOIN images i ON cl.image_id = i.id 
+                       WHERE cl.image_id = ? 
+                       ORDER BY cl.timestamp DESC LIMIT ?''',
+                    (image_id, limit)
+                )
+            else:
+                self.cursor.execute(
+                    '''SELECT cl.*, i.url, i.caption 
+                       FROM classification_logs cl 
+                       JOIN images i ON cl.image_id = i.id 
+                       ORDER BY cl.timestamp DESC LIMIT ?''',
+                    (limit,)
+                )
+            
+            logs = [dict(row) for row in self.cursor.fetchall()]
+            self.close()
+            
+            return logs
+        except Exception as e:
+            self.log(f"ERROR - Failed to get classification logs: {e}")
+            self.close()
+            return []
+    
+    def get_images_by_classification(self, classification_label, limit=20):
+        """Get images filtered by classification label"""
+        self.connect()
         
-        return image_id
+        try:
+            self.cursor.execute('''
+            SELECT id, url, caption, category, user_id, is_default, created_at, 
+                   classification_label, classification_confidence
+            FROM images
+            WHERE classification_label = ?
+            ORDER BY created_at DESC
+            LIMIT ?
+            ''', (classification_label, limit))
+            
+            images = [dict(row) for row in self.cursor.fetchall()]
+            self.close()
+            
+            return images
+        except Exception as e:
+            self.log(f"ERROR - Failed to get images by classification: {e}")
+            self.close()
+            return []
     
     def get_comments(self, image_id):
         """Get comments for an image"""

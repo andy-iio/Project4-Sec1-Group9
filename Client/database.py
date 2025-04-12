@@ -124,7 +124,20 @@ class Database:
             (8, "/static/images/8.jpg", "Clothes that Guarantee Survival", "Clothes", 1, 1),
             (9, "/static/images/9.jpg", "If you don'T have these in your pantry, uh oh", "Meal Prep", 1, 1),
             (10, "/static/images/10.jpg", "Rebuild after the apocalypse is over with these plants", "Gardening", 1, 1),
-            (11, "/static/images/11.jpg", "Flowers will be worth millions soon, enjoy them now", "Gardening", 1, 1)
+            (11, "/static/images/11.jpg", "Flowers will be worth millions soon, enjoy them now", "Gardening", 1, 1),
+            (12, "/static/images/12.jpg", "Are you ready? Are you sure?", "Tips", 1, 1),
+            (13, "/static/images/13.jpg", "Read this to help!", "Hacks", 1, 1),
+            (14, "/static/images/14.jpg", "All natural weapons", "Tools", 1, 1),
+            (15, "/static/images/15.jpg", "Delicious bread for when the world ends ", "Food", 1, 1),
+            (16, "/static/images/16.jpg", "The end is near..", "Tips", 1, 1),
+            (17, "/static/images/17.jpg", "15 Reasons you need to prep NOW", "Tips", 1, 1),
+            (18, "/static/images/18.jpg", "Stockpile = Survival", "Tips", 1, 1),
+            (19, "/static/images/19.jpg", "18 Best foods you NEED to prep", "Meal Prep", 1, 1),
+            (20, "/static/images/20.jpg", "Number 27 is shocking..", "Tips", 1, 1),
+            (21, "/static/images/21.jpg", "THESE IDEAS WILL SAVE YOUR LIFE", "Tips", 1, 1),
+            (22, "/static/images/22.jpg", "This is our future world.. get ready", "Tips", 1, 1),
+            (23, "/static/images/23.jpg", "You NEED to know about this..", "Tips", 1, 1),
+            (24, "/static/images/24.jpg", "Which prepper type are you??", "Tips", 1, 1)
         ]
         
         self.cursor.executemany(

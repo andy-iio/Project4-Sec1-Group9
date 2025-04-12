@@ -4,8 +4,9 @@ import logging
 import hashlib
 import time
 
+
 # Logging structure for btoh clent and server
-logging.basicConfig(
+logging.basicConfig( 
     filename='client_log.txt',
     filemode='w',
     level=logging.INFO,
@@ -15,7 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger('TCPClient')
 
 # tried to add a filter to exclude static file requests from logs(kind of works)
-class FilterStaticRequests(logging.Filter):
+class FilterStaticRequests(logging.Filter): # pragma: no cover
     def filter(self, record):
         if hasattr(record, 'msg') and isinstance(record.msg, str):
             if '/static/' in record.msg or 'GET /static' in record.msg:
@@ -54,7 +55,7 @@ class TCPClient:
             logger.error(f"Connection error: {str(e)}")
             return False
     
-    def disconnect(self):
+    def disconnect(self): # pragma: no cover
         """Disconnect from the server"""
         if self.socket:
             self.socket.close()

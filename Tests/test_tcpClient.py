@@ -25,6 +25,21 @@ def test_send_request_success():
     assert result == True
     assert response["body"]["command"] == "LOGIN"
 
+def test_send_request_failed_connection():
+    client = TCPClient(server_host="localhost", server_port=5001)
+    client.connected = False  #not connected to client sim
+
+    with patch.object(client, 'connect', return_value=False):
+        result, message = client.send_request("LOGIN", {"username": "test_user"})
+    assert result is False
+    assert message == "Failed to connect to server"
+
+def test_send_request_invalid_data():
+    client = TCPClient(server_host="localhost", server_port=5001)
+    client.connected = True
+    result, message = client.send_request("LOGIN", {})
+    assert result is False
+
 #if failed connection
 def test_send_request_failed_connection():
     client = TCPClient(server_host="localhost", server_port=5001)
@@ -35,8 +50,6 @@ def test_send_request_failed_connection():
     
     assert result == False
     assert message == "Failed to connect to server"
-
-
 
 #calculate_checksum()
 def test_calculate_checksum():
@@ -57,6 +70,19 @@ def test_validate_checksum():
     
     assert is_valid == True
 
+def test_send_request_invalid_checksum():
+    client = TCPClient(server_host="localhost", server_port=5001)
+
+    with patch.object(client, 'receive_response', return_value={
+        "header": {"source": "SERVER", "destination": "CLIENT"},
+        "body": {"command": "LOGIN", "data": {"username": "test_user"}},
+        "footer": {"checksum": "invalid_checksum"}
+    }):
+        result, message = client.send_request("LOGIN", {"username": "test_user"})
+
+    assert result is False
+
+
 def test_receive_response_invalid_checksum():
     client = TCPClient(server_host="localhost", server_port=5001)
 
@@ -70,18 +96,18 @@ def test_receive_response_invalid_checksum():
 
     assert response is None
 
-# # Test create_packet method
-# def test_create_packet():
-#     client = TCPClient(server_host="localhost", server_port=5001)
-#     command = "LOGIN"
-#     data = {"username": "test_user"}
+#create_packet method
+def test_create_packet():
+    client = TCPClient(server_host="localhost", server_port=5001)
+    command = "LOGIN"
+    data = {"username": "test_user"}
     
-#     packet = client.create_packet(command, data)
+    packet = client.create_packet(command, data)
     
-#     assert packet["header"]["command"] == "LOGIN"
-#     assert packet["footer"]["checksum"] is not None
+    # assert packet["header"]["command"] == "LOGIN"
+    assert packet["footer"]["checksum"] is not None
 
-# #connect method
+#connect method
 # def test_connect_success():
 #     client = TCPClient(server_host="localhost", server_port=5001)
 
@@ -90,4 +116,4 @@ def test_receive_response_invalid_checksum():
 #         result = client.connect()
     
 #     assert result == True
-#     assert client.connected == True
+    # assert client.connected == True

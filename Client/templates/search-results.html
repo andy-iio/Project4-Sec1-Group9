@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Aftermath Network - Search Results{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Search Results for "{{ query }}"</h1>
+    
+    <!-- Search type tabs -->
+    <div class="mb-4">
+        <ul class="nav nav-tabs" id="searchTypeTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if search_type == 'posts' %}active{% endif %}" 
+                   href="{{ url_for('search', query=query, type='posts') }}">
+                   <i class="fas fa-image me-1"></i> Posts
+                </a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link {% if search_type == 'users' %}active{% endif %}" 
+                   href="{{ url_for('search', query=query, type='users') }}">
+                   <i class="fas fa-users me-1"></i> Users
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Posts search results -->
+    {% if search_type == 'posts' %}
+        {% if images|length > 0 %}
+            <!-- Dynamic category buttons using categories from Python -->
+            <div class="row mb-3">
+                <div class="col-12 text-center" id="category-filters">
+                    <button class="btn btn-sm btn-outline-secondary me-1 mb-2 active" data-filter="all">All</button>
+                    
+                    {% for category in categories %}
+                        <button class="btn btn-sm btn-outline-primary me-1 mb-2" data-filter="{{ category }}">{{ category }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            {% include "image-grid.html" %}
+        {% else %}
+            <div class="alert alert-info">
+                <p>No post results found for "{{ query }}". Try a different search term or <a href="{{ url_for('index') }}">return to home</a>.</p>
+            </div>
+        {% endif %}
+    
+    <!-- Users search results -->
+    {% elif search_type == 'users' %}
+        {% if users|length > 0 %}
+            <div class="row">
+                {% for user in users %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 user-card">
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <img src="{{ url_for('static', filename='images/profile.jpg') }}" 
+                                         class="rounded-circle img-thumbnail" 
+                                         alt="{{ user.username }}" 
+                                         style="width: 100px; height: 100px;">
+                                </div>
+                                <h5 class="card-title">{{ user.username }}</h5>
+                                <p class="card-text text-muted">Member since: {{ user.created_at[:10] }}</p>
+                                <a href="{{ url_for('user_profile', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">View Profile</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <p>No user results found for "{{ query }}". Try a different search term or <a href="{{ url_for('index') }}">return to home</a>.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if search_type == 'posts' %}
+<script src="{{ url_for('static', filename='js/home-filter.js') }}"></script>
+{% endif %}
+{% endblock %}

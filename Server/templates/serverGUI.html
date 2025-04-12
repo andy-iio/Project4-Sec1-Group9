@@ -10,18 +10,19 @@
         <p id="logs">
             <pre>Waiting for logs...</pre>
         </p>
-        
+                
         <div class="square" id="square">Starting...</div>
-
+        
         <button class="S-Button" onclick="startServer()">Start Server</button>
         <button class="E-Button" onclick="stopServer()">Stop Server</button>
-
+        <button onclick="updateLogs()">Refresh Logs</button>
+        
         <script>
         const square = document.getElementById("square");
         const logsElement = document.getElementById("logs");
         let isFirstUpdate = true;
         let lastLogCount = 0;
-
+        
         // Function to start the server
         function startServer() {
             fetch('/start_server', {
@@ -40,7 +41,7 @@
                 alert('Error starting server: ' + error);
             });
         }
-
+        
         // Function to stop the server
         function stopServer() {
             fetch('/stop_server', {
@@ -59,7 +60,7 @@
                 alert('Error stopping server: ' + error);
             });
         }
-
+        
         // Function to update logs
         function updateLogs() {
             fetch('/get_logs')
@@ -70,28 +71,38 @@
                     if (isFirstUpdate || data.logs.length !== lastLogCount) {
                         let logHtml = '';
                         data.logs.forEach(log => {
-                            logHtml += `<pre>${log}</pre>`;
+                                //added colours for differnt messages
+                            if (log.includes('ERROR')) {
+                                logHtml += `<pre style="color: #ff5555">${log}</pre>`;
+                            } else if (log.includes('WARNING')) {
+                                logHtml += `<pre style="color: #ffaa55">${log}</pre>`;
+                            } else if (log.includes('search') || log.includes('SEARCH')) {
+                                logHtml += `<pre style="color: #55ff55">${log}</pre>`;
+                            } else {
+                                logHtml += `<pre>${log}</pre>`;
+                            }
                         });
                         logsElement.innerHTML = logHtml;
                         
-                        // Update the square with the most recent log
                         square.innerHTML = data.logs[data.logs.length - 1];
                         
                         // Update tracking variables
                         isFirstUpdate = false;
                         lastLogCount = data.logs.length;
                     }
+                } else {
+                    logsElement.innerHTML = "<pre>No important logs to display</pre>";
+                    square.innerHTML = "No important logs to display";
                 }
             })
             .catch(error => {
                 console.error('Error fetching logs:', error);
             });
         }
-
-        // Update logs every 10 seconds 
-        setInterval(updateLogs, 10000);
-
-        // Initial update
+        
+        // Update logs every 20 seconds
+        setInterval(updateLogs, 20000);
+        
         updateLogs();
         </script>
     </body>

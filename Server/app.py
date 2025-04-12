@@ -2,7 +2,10 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 import threading
 import os
 import logging
+
+# Now we can import directly since database.py is in the server directory
 from tcp_server import TCPServer
+from database import Database
 
 # Create a separate logger for the Flask app
 flask_logger = logging.getLogger('FlaskApp')
@@ -12,8 +15,14 @@ handler.setFormatter(formatter)
 flask_logger.addHandler(handler)
 flask_logger.setLevel(logging.INFO)
 
+# Turn off default werkzeug logging to reduce noise
+logging.getLogger('werkzeug').setLevel(logging.ERROR)
+
 app = Flask(__name__)
-app.logger.handlers = []  
+app.logger.handlers = []  # Remove default Flask handlers to avoid duplicate logging
+
+# Initialize the database
+db = Database()
 
 # Initialize the socket server
 socket_server = None
@@ -71,12 +80,33 @@ def get_logs():
             with open(tcp_log_file, 'r') as f:
                 all_logs = f.readlines()
                 
-                # Filter out logs related to /get_logs requests
-                logs = [log.strip() for log in all_logs 
-                       if 'GET /get_logs' not in log and '/static/server.css' not in log]
+                # should hopefully get rid of get logs spam
+                filtered_logs = []
+                for log in all_logs:
+                    # remove all HTTP requests
+                    if 'GET /' in log or 'POST /' in log:
+                        continue
+                    
+                    if '/static/' in log:
+                        continue
+                    
+                    if '/get_logs' in log:
+                        continue
+                        
+                    # All log command types
+                    important_keywords = [
+                        'ERROR', 'WARNING', 'REQUEST from', 'SENT RESPONSE',
+                        'SUCCESS', 'FAIL', 'connected', 'disconnected',
+                        'Server started', 'Server stopped', 'Connection established',
+                        'Connection closed', 'Successfully processed command',
+                        '[User:', 'uploaded', 'saved', 'comment', 'search', 'SEARCH'
+                    ]
+                    
+                    if any(keyword in log for keyword in important_keywords):
+                        filtered_logs.append(log.strip())
                 
-                # Get the last 20 logs after filtering
-                logs = logs[-20:] if len(logs) > 20 else logs
+                # Get the last 20 logs 
+                logs = filtered_logs[-20:] if len(filtered_logs) > 20 else filtered_logs
     except Exception as e:
         logs = [f"Error reading logs: {str(e)}"]
     
@@ -86,8 +116,8 @@ def start_socket_server():
     """Start the TCP server in a separate thread"""
     global socket_server
     
-    # Initialize the server
-    socket_server = TCPServer(port=5001)
+    # Initialize the server with the database
+    socket_server = TCPServer(port=5001, db=db)
     
     # Start the server in a new thread
     server_thread = threading.Thread(target=socket_server.start)
@@ -95,15 +125,13 @@ def start_socket_server():
     server_thread.start()
 
 if __name__ == '__main__':
-    # Start the socket server in a separate thread
     print("\n")
     print("#" * 70)
     print("STARTING TCP SERVER ON PORT 5001")
     print("#" * 70)
     
-    server_thread = threading.Thread(target=start_socket_server)
-    server_thread.daemon = True
-    server_thread.start()
+    # Start the socket server
+    start_socket_server()
     
     print("\n")
     print("#" * 70)
@@ -113,4 +141,4 @@ if __name__ == '__main__':
     print("#" * 70)
     print("\n")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)

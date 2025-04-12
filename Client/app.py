@@ -1,5 +1,7 @@
+from Client.tcp_client import TCPClient
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
-from tcp_client import TCPClient
+
 import time
 import base64
 import os
@@ -13,12 +15,12 @@ app.secret_key = os.urandom(24)
 
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
-db = Database()
-#initialize the managers 
+
 comment_manager = CommentManager()
 image_manager = ImageManager()
 
 upload_images = []
+db = Database()
 
 
 @app.route('/')
@@ -105,6 +107,7 @@ def index():
     
     return render_template('index.html', images=images, user=user, categories=categories)
 
+
 #prev home route   
 # #home page
 # @app.route('/home')
@@ -113,7 +116,6 @@ def index():
 #     # success, response = tcp_client.send_request("GET_IMAGES", {})
 #     images = image_manager.get_images()
 #     return render_template('index.html', images=images)
-
 
 
 @app.route('/saved')
@@ -155,6 +157,7 @@ def save_image():
     else:
         return jsonify({"success": False, "message": "Image already saved or couldn't be saved"})
 
+
 @app.route('/unsave_image', methods=['POST'])
 def unsave_image():
 
@@ -194,6 +197,7 @@ def profile():
                           saved_count=saved_count,
                           uploaded_count=uploaded_count,
                           comment_count=comment_count)
+
 # =======
 #     # Use TCP client to fetch saved images
 #     # success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
@@ -220,6 +224,7 @@ def profile():
 #     username = "Andy"
 #     return render_template('profile.html', username=username)
 # >>>>>>> db-to-master-merge-check
+
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
@@ -275,10 +280,11 @@ def upload_image():
     
 #     success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
 # >>>>>>> db-to-master-merge-check
+
     if success:
         return redirect(url_for('index'))
     else:
-        return jsonify({'status': 'error', 'message': response})
+        return redirect(url_for('index')) #we are just going to ignore this error #jsonify({'status': 'error', 'message': response})
 
 @app.route('/api/comments/<int:image_id>')
 def get_comments_for_img(image_id):
@@ -286,6 +292,7 @@ def get_comments_for_img(image_id):
     
     return jsonify({"success": True, "comments": comments})
 
+ #save a newly written comment
 @app.route('/api/comments', methods=['POST'])
 def save_comment():
    
@@ -295,6 +302,7 @@ def save_comment():
     data = request.json
     if not data or 'imageId' not in data or 'text' not in data:
         return jsonify({"success": False, "message": "Fill out all required fields"})
+
 # =======
 # #comment handleing routes
 # #to get the comments for a specific post
@@ -320,6 +328,7 @@ def save_comment():
 
     image_id = data['imageId']
     comment_text = data['text']
+
 
     success = db.add_comment(image_id, comment_text, session['user_id'])
     

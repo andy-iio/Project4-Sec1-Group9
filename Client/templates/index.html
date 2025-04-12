@@ -3,11 +3,31 @@
 {% block title %}Aftermath Network - Home{% endblock %}
 
 {% block content %}
+   
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-dark text-light p-4 rounded shadow">
+                <h2>Welcome to the Aftermath Network</h2>
+                <p class="lead mb-0">Your resource for survival tips and emergency preparedness.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dynamic category buttons  -->
+    <div class="row mb-3">
+        <div class="col-12 text-center" id="category-filters">
+            <button class="btn btn-sm btn-outline-secondary me-1 mb-2 active" data-filter="all">All</button>
+            
+            {% for category in categories %}
+                <button class="btn btn-sm btn-outline-primary me-1 mb-2" data-filter="{{ category }}">{{ category }}</button>
+            {% endfor %}
+        </div>
+    </div>
+    
     {% include "image-grid.html" %}
     {% include "upload-button.html" %}
 {% endblock %}
 
 {% block extra_js %}
-<script>
-</script>
+<script src="{{ url_for('static', filename='js/home-filter.js') }}"></script>
 {% endblock %}

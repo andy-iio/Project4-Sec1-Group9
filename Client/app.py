@@ -1,20 +1,33 @@
+from Client.tcp_client import TCPClient
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
-from tcp_client import TCPClient
+
 import time
 import base64
 import os
+
 from datetime import datetime
-from database import Database
+from Client.database import Database
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  
 app.secret_key = os.urandom(24)  
 
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
+
+# comment_manager = CommentManager()
+# image_manager = ImageManager()
+
+upload_images = []
 db = Database()
+
 
 @app.route('/')
 def login():
+    # Check if user is already logged in
+    if 'user_id' in session:
+        return redirect(url_for('index'))
     # Check if user is already logged in
     if 'user_id' in session:
         return redirect(url_for('index'))

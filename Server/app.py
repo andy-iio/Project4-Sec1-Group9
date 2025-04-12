@@ -4,6 +4,8 @@ import os
 import logging
 
 # Now we can import directly since database.py is in the server directory
+import os
+import logging
 from tcp_server import TCPServer
 from database import Database
 
@@ -26,6 +28,7 @@ db = Database()
 
 # Initialize the socket server
 socket_server = None
+tcp_log_file = 'server_log.txt'
 tcp_log_file = 'server_log.txt'
 
 @app.route('/')

@@ -52,6 +52,7 @@
                 {% else %}
                 <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
                 {% endif %}
+                
             </div>
         </div>
     </nav>
@@ -67,6 +68,7 @@
     <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
     <!--masonry-->
     <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"></script>
+    
     
     <!-- Common JavaScript -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>

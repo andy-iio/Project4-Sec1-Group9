@@ -8,6 +8,7 @@ import sys
 import os
 from datetime import datetime
 
+# Logging structure 
 logging.basicConfig(
     filename='server_log.txt',
     filemode='a',  
@@ -52,7 +53,12 @@ class ImprovedLogFilter(logging.Filter):
 logger.addFilter(ImprovedLogFilter())
 
 class TCPServerConnection:
+    """
+    Handles an individual client connection to the server
+    """
+    
     def __init__(self, client_socket, address, db):
+        """Initialize the connection handler"""
         self.client_socket = client_socket
         self.address = address
         self.sequence_number = 0
@@ -69,6 +75,7 @@ class TCPServerConnection:
         try:
             logger.info(f"Connection established with {self.address}")
             buffer = ""
+            
             
             while True:
                 try:
@@ -442,6 +449,197 @@ class TCPServerConnection:
                 
         return response
     
+    def process_command(self, command, data):
+        """Process the request command and return response data"""
+        # Default response
+        response = {
+            "command": "ERROR",
+            "data": {"message": "Unknown command"}
+        }
+        
+        # Handle different commands
+        if command == "PING":
+            response = {
+                "command": "PONG",
+                "data": {
+                    "received_timestamp": data.get("timestamp", 0),
+                    "server_timestamp": time.time()
+                }
+            }
+        
+        elif command == "TEST" or command == "ECHO":
+            response = {
+                "command": "ECHO",
+                "data": {
+                    "message": "Server received your request",
+                    "original_command": command,
+                    "timestamp": datetime.now().isoformat()
+                }
+            }
+        
+        elif command == "LOGIN":
+            username = data.get("username", "")
+            password = data.get("password", "")
+            
+            success, user_id = self.db.authenticate_user(username, password)
+            
+            if success:
+                response = {
+                    "command": "LOGIN_SUCCESS",
+                    "data": {
+                        "user_id": user_id,
+                        "username": username
+                    }
+                }
+            else:
+                response = {
+                    "command": "LOGIN_FAILED",
+                    "data": {
+                        "message": "Invalid username or password"
+                    }
+                }
+        
+        elif command == "REGISTER":
+            username = data.get("username", "")
+            password = data.get("password", "")
+            email = data.get("email", None)
+            
+            success, result = self.db.add_user(username, password, email)
+            
+            if success:
+                response = {
+                    "command": "REGISTER_SUCCESS",
+                    "data": {
+                        "user_id": result,
+                        "username": username
+                    }
+                }
+            else:
+                response = {
+                    "command": "REGISTER_FAILED",
+                    "data": {
+                        "message": result
+                    }
+                }
+        
+        elif command == "UPLOAD_IMAGE":
+            filename = data.get("filename", "")
+            caption = data.get("caption", "")
+            tags = data.get("tags", "")
+            user_id = data.get("user_id", None)
+            image_data = data.get("image", None)
+            
+            if not user_id:
+                response = {
+                    "command": "UPLOAD_FAILED",
+                    "data": {
+                        "message": "User ID is required"
+                    }
+                }
+            else:
+                success, image_id = self.db.save_image(filename, caption, tags, user_id, image_data)
+                
+                if success:
+                    response = {
+                        "command": "UPLOAD_SUCCESS",
+                        "data": {
+                            "image_id": image_id,
+                            "filename": filename
+                        }
+                    }
+                else:
+                    response = {
+                        "command": "UPLOAD_FAILED",
+                        "data": {
+                            "message": image_id  # Error message
+                        }
+                    }
+        
+        elif command == "GET_IMAGES":
+            images = self.db.get_images(limit=20)
+            
+            response = {
+                "command": "IMAGES",
+                "data": {
+                    "images": images
+                }
+            }
+        
+        elif command == "GET_SAVED_IMAGES":
+            user_id = data.get("user_id", None)
+            
+            if not user_id:
+                response = {
+                    "command": "GET_SAVED_FAILED",
+                    "data": {
+                        "message": "User ID is required"
+                    }
+                }
+            else:
+                images = self.db.get_user_saved_images(user_id)
+                
+                response = {
+                    "command": "SAVED_IMAGES",
+                    "data": {
+                        "images": images
+                    }
+                }
+        
+        elif command == "SAVE_IMAGE":
+            user_id = data.get("user_id", None)
+            image_id = data.get("image_id", None)
+            
+            if not user_id or not image_id:
+                response = {
+                    "command": "SAVE_IMAGE_FAILED",
+                    "data": {
+                        "message": "User ID and Image ID are required"
+                    }
+                }
+            else:
+                success, result = self.db.save_image_for_user(user_id, image_id)
+                
+                if success:
+                    response = {
+                        "command": "SAVE_IMAGE_SUCCESS",
+                        "data": {
+                            "user_id": user_id,
+                            "image_id": image_id
+                        }
+                    }
+                else:
+                    response = {
+                        "command": "SAVE_IMAGE_FAILED",
+                        "data": {
+                            "message": result
+                        }
+                    }
+        
+        elif command == "UNSAVE_IMAGE":
+            user_id = data.get("user_id", None)
+            image_id = data.get("image_id", None)
+            
+            if not user_id or not image_id:
+                response = {
+                    "command": "UNSAVE_IMAGE_FAILED",
+                    "data": {
+                        "message": "User ID and Image ID are required"
+                    }
+                }
+            else:
+                success = self.db.unsave_image_for_user(user_id, image_id)
+                
+                response = {
+                    "command": "UNSAVE_IMAGE_SUCCESS",
+                    "data": {
+                        "user_id": user_id,
+                        "image_id": image_id,
+                        "success": success
+                    }
+                }
+                
+        return response
+    
     def send_error(self, message):
         response = self.create_packet("ERROR", {"message": message})
         self.client_socket.sendall(json.dumps(response).encode('utf-8'))
@@ -470,6 +668,12 @@ class TCPServerConnection:
 
 
 class TCPServer:
+    """
+    TCP/IP Socket server
+    """
+    
+    def __init__(self, host='0.0.0.0', port=5001, db=None):
+        """Initialize the socket server"""
     def __init__(self, host='0.0.0.0', port=5001, db=None):
         self.host = host
         self.port = port
@@ -490,7 +694,6 @@ class TCPServer:
             
             while self.running:
                 client_socket, client_address = self.server_socket.accept()
-                logger.info(f"New client connected: {client_address}")
                 
                 client_handler = TCPServerConnection(client_socket, client_address, self.db)
                 

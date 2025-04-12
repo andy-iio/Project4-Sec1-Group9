@@ -4,7 +4,9 @@ import logging
 import hashlib
 import time
 
-logging.basicConfig(
+
+# Logging structure for btoh clent and server
+logging.basicConfig( 
     filename='client_log.txt',
     filemode='w',
     level=logging.INFO,
@@ -47,7 +49,8 @@ class TCPClient:
             self.connected = False
             return False
     
-    def disconnect(self):
+    def disconnect(self): # pragma: no cover
+        """Disconnect from the server"""
         if self.socket:
             self.socket.close()
             self.socket = None
@@ -59,6 +62,7 @@ class TCPClient:
             if not self.connect():
                 return False, "Failed to connect to server"
                 
+        # Create request packet
         packet = self.create_packet(command, data)
         #ALL NAMING FUNCTIONS THAT SERVER SHOULD CALL
         try:
@@ -148,12 +152,15 @@ class TCPClient:
                 logger.warning("Received empty response from server")
                 return None
                 
+           
             response = json.loads(data)
             
+            # Validate header
             if 'header' not in response:
                 logger.warning("Invalid response format - missing header")
                 return None
                 
+            # Validate checksum
             if 'footer' in response and 'checksum' in response['footer']:
                 if not self.validate_checksum(json.dumps(response['body']), response['footer']['checksum']):
                     logger.warning("Response checksum validation failed")

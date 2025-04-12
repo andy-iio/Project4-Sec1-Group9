@@ -1,131 +1,346 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
 from tcp_client import TCPClient
 import time
 import base64
+import os
+from database import Database
 
 from comment_manager import CommentManager
 from image_manager import ImageManager
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)  
 
-# Create a global client instance
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
+db = Database()
 #initialize the managers 
 comment_manager = CommentManager()
 image_manager = ImageManager()
 
 upload_images = []
 
-#login page
+
 @app.route('/')
 def login():
+    # Check if user is already logged in
+    if 'user_id' in session:
+        return redirect(url_for('index'))
     return render_template('login.html')
 
-# Process login
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email', None)
+        
+        if not username or not password:
+            return render_template('register.html', error="Username and password are required")
+        
+        success, result = db.create_user(username, password, email)
+        
+        if success:
+            print(f"User registered: {username}")
+            tcp_client.send_request("REGISTER", {
+                "username": username,
+                "user_id": result
+            })
+            
+            flash("Registration successful! Please log in.")
+            return redirect(url_for('login'))
+        else:
+            return render_template('register.html', error=result)
+    
+    return render_template('register.html')
+
 @app.route('/process_login', methods=['POST'])
 def process_login():
     username = request.form.get('username')
     password = request.form.get('password')
     
-    # Use TCP client to authenticate
-    success, response = tcp_client.send_request("LOGIN", {
-        "username": username,
-        "password": password
-    })
+    if not username or not password:
+        return render_template('login.html', error="Username and password are required")
+    
+    success, user_id = db.authenticate_user(username, password)
     
     if success:
+        session['user_id'] = user_id
+        session['username'] = username
+        
+        tcp_client.send_request("LOGIN", {
+            "username": username,
+            "user_id": user_id
+        })
+        
+        print(f"User logged in: {username}")
         return redirect(url_for('index'))
     else:
-        return render_template('login.html', error="Login failed")
+        return render_template('login.html', error="Invalid username or password")
+
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    session.pop('username', None)
     
-#home page
+    return redirect(url_for('login'))
+
 @app.route('/home')
 def index():
-    # Use TCP client to fetch images
-    # success, response = tcp_client.send_request("GET_IMAGES", {})
-    images = image_manager.get_images()
-    return render_template('index.html', images=images)
+    
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    images = db.get_all_images()
+    
+    user = db.get_user(session['user_id'])
+    
+    for image in images:
+        image['is_saved'] = db.is_image_saved_by_user(session['user_id'], image['id'])
+    
+    categories = []
+    for image in images:
+        if image['category'] and image['category'] not in categories:
+            categories.append(image['category'])
+    
+    return render_template('index.html', images=images, user=user, categories=categories)
+
+#prev home route   
+# #home page
+# @app.route('/home')
+# def index():
+#     # Use TCP client to fetch images
+#     # success, response = tcp_client.send_request("GET_IMAGES", {})
+#     images = image_manager.get_images()
+#     return render_template('index.html', images=images)
 
 
-#saved page 
+
 @app.route('/saved')
 def saved():
-    # Use TCP client to fetch saved images
-    # success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
-    username = "Andy"
-    images = image_manager.get_saved_images(username)
-    return render_template('saved-section.html', images=images, username=username)
+  
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    images = db.get_saved_images(session['user_id'])
+    
 
-#when clicking the saved button on an image, copy it to the saved section
+    user = db.get_user(session['user_id'])
+    
+    categories = []
+    for image in images:
+        if image['category'] and image['category'] not in categories:
+            categories.append(image['category'])
+    
+    return render_template('saved-section.html', images=images, username=user['username'], categories=categories)
+
 @app.route('/save_image', methods=['POST'])
 def save_image():
+  
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "You must be logged in to save images"})
+    
     image_id = request.json.get('image_id')
-    username = "Andy" 
-
-    image = image_manager.get_image_by_id(image_id)
-    if image:
-        image_manager.save_image_for_user(image, username)
+    
+    success = db.save_image_for_user(session['user_id'], image_id)
+    
+    if success:
+    
+        tcp_client.send_request("SAVE_IMAGE", {
+            "user_id": session['user_id'],
+            "image_id": image_id
+        })
+        
         return jsonify({"success": True, "message": "Image saved to your vault!!"})
+    else:
+        return jsonify({"success": False, "message": "Image already saved or couldn't be saved"})
 
-    return jsonify({"success": False, "message": "Couldn't save this image. Please try again later"})
+@app.route('/unsave_image', methods=['POST'])
+def unsave_image():
 
-#profile page
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "You must be logged in to unsave images"})
+    
+    image_id = request.json.get('image_id')
+    
+    success = db.unsave_image_for_user(session['user_id'], image_id)
+    
+    if success:
+       
+        tcp_client.send_request("UNSAVE_IMAGE", {
+            "user_id": session['user_id'],
+            "image_id": image_id
+        })
+        
+        return jsonify({"success": True, "message": "Image removed from your saved posts"})
+    else:
+        return jsonify({"success": False, "message": "Failed to remove image"})
+
 @app.route('/profile')
 def profile():
-    username = "Andy"
-    return render_template('profile.html', username=username)
+    # Check if user is logged in
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = db.get_user(session['user_id'])
+    
+    # Get counts for user stats
+    saved_count = db.get_saved_count(session['user_id'])
+    uploaded_count = db.get_uploaded_count(session['user_id'])
+    comment_count = db.get_comment_count(session['user_id'])
+    
+    return render_template('profile.html', 
+                          user=user, 
+                          saved_count=saved_count,
+                          uploaded_count=uploaded_count,
+                          comment_count=comment_count)
+# =======
+#     # Use TCP client to fetch saved images
+#     # success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
+#     username = "Andy"
+#     images = image_manager.get_saved_images(username)
+#     return render_template('saved-section.html', images=images, username=username)
 
-#image uploads
+# #when clicking the saved button on an image, copy it to the saved section
+# @app.route('/save_image', methods=['POST'])
+# def save_image():
+#     image_id = request.json.get('image_id')
+#     username = "Andy" 
+
+#     image = image_manager.get_image_by_id(image_id)
+#     if image:
+#         image_manager.save_image_for_user(image, username)
+#         return jsonify({"success": True, "message": "Image saved to your vault!!"})
+
+#     return jsonify({"success": False, "message": "Couldn't save this image. Please try again later"})
+
+# #profile page
+# @app.route('/profile')
+# def profile():
+#     username = "Andy"
+#     return render_template('profile.html', username=username)
+# >>>>>>> db-to-master-merge-check
+
 @app.route('/upload', methods=['POST'])
 def upload_image():
+    
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
     if 'image' not in request.files:
-        return 'no file (flask side)', 400
-    #gets info from form
+        return 'No file provided', 400
+    
     image = request.files['image']
     caption = request.form.get('caption')
     tags = request.form.get('tags')
     
-    image_data, error = image_manager.upload_image(image, caption, tags)
-    if error:
-        return error, 400
+    if image.filename == '':
+        return 'No selected file', 400
+    
+    # Save the file to uploads folder
+    image_content = image.read()
+    image_filename = image.filename
+    upload_folder = './static/uploads'
+    
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+    
+    image_path = os.path.join(upload_folder, image_filename)
+    
+    with open(image_path, 'wb') as f:
+        f.write(image_content)
+    
+    # Encode image to base64 
+    base64_image = base64.b64encode(image_content).decode('utf-8')
+    
+   
+    image_url = f"./static/uploads/{image_filename}"
+    image_id = db.upload_image(image_url, caption, tags, session['user_id'], base64_image)
+    
+    image_data = {
+        "id": image_id,
+        "url": image_url,
+        "caption": caption,
+        "category": tags,
+        "user_id": session['user_id'],
+        "image": base64_image
+    }
     
     success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
+    
+# =======
+#     image_data, error = image_manager.upload_image(image, caption, tags)
+#     if error:
+#         return error, 400
+    
+#     success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
+# >>>>>>> db-to-master-merge-check
     if success:
         return redirect(url_for('index'))
     else:
         return jsonify({'status': 'error', 'message': response})
 
-#comment handleing routes
-#to get the comments for a specific post
 @app.route('/api/comments/<int:image_id>')
 def get_comments_for_img(image_id):
-    image_comments = comment_manager.get_comments(image_id)
-    return jsonify({"success": True, "comments": image_comments})
+    comments = db.get_comments(image_id)
+    
+    return jsonify({"success": True, "comments": comments})
 
-#save a newly written comment
 @app.route('/api/comments', methods=['POST'])
 def save_comment():
+   
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "You must be logged in to comment"})
+    
     data = request.json
     if not data or 'imageId' not in data or 'text' not in data:
-        return jsonify({"success": False, "message": "fill out all required fields"})
+        return jsonify({"success": False, "message": "Fill out all required fields"})
+# =======
+# #comment handleing routes
+# #to get the comments for a specific post
+# @app.route('/api/comments/<int:image_id>')
+# def get_comments_for_img(image_id):
+#     image_comments = comment_manager.get_comments(image_id)
+#     return jsonify({"success": True, "comments": image_comments})
+
+# #save a newly written comment
+# @app.route('/api/comments', methods=['POST'])
+# def save_comment():
+#     data = request.json
+#     if not data or 'imageId' not in data or 'text' not in data:
+#         return jsonify({"success": False, "message": "fill out all required fields"})
+
+#     image_id = data['imageId']
+#     comment_text = data['text']
+    
+#     result = comment_manager.save_comment(image_id, comment_text)
+    
+#     return jsonify(result)
+# >>>>>>> db-to-master-merge-check
 
     image_id = data['imageId']
     comment_text = data['text']
-    
-    result = comment_manager.save_comment(image_id, comment_text)
-    
-    return jsonify(result)
 
+    success = db.add_comment(image_id, comment_text, session['user_id'])
+    
+    if success:
+        
+        tcp_client.send_request("ADD_COMMENT", {
+            "user_id": session['user_id'],
+            "image_id": image_id,
+            "text": comment_text
+        })
+        
+        return jsonify({"success": True, "message": "Comment posted!!"})
+    else:
+        return jsonify({"success": False, "message": "Failed to post comment"})
 
-# API endpoint to check TCP connection
 @app.route('/api/check_connection')
 def check_connection():
     if not tcp_client.connected:
         if not tcp_client.connect():
             return jsonify({"status": "disconnected", "message": "Failed to connect to server"})
     
-    # Test the connection with a simple ping
     success, response = tcp_client.send_request("PING", {"timestamp": time.time()})
     
     if success:
@@ -141,7 +356,7 @@ def check_connection():
         })
 
 if __name__ == '__main__':
-    # Connect to the server
+    
     print("\n")
     print("#" * 70)
     print("CONNECTING TO TCP SERVER ON PORT 5001")
@@ -157,5 +372,4 @@ if __name__ == '__main__':
     print("#" * 70)
     print("\n")
     
-    # Run Flask app
     app.run(debug=True, port=5002)

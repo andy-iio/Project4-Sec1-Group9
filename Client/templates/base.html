@@ -17,9 +17,7 @@
 <body>
     <!-- top bar -->
     <nav class="navbar navbar-expand-lg navbar-light">
-    <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">Aftermath Network</a>
             <a class="navbar-brand" href="{{ url_for('index') }}">Aftermath Network</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -55,17 +53,11 @@
                 <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
                 {% endif %}
                 
-                {% if session.user_id %}
-                <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
-                {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-                {% endif %}
             </div>
         </div>
     </nav>
 
     <!-- main stuff goes here -->
-    <div class="container mt-4">
     <div class="container mt-4">
         {% block content %}{% endblock %}
     </div>
@@ -77,10 +69,6 @@
     <!--masonry-->
     <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"></script>
     
-    <!-- Common JavaScript -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    
-    {% block extra_js %}{% endblock %}
     
     <!-- Common JavaScript -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>

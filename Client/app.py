@@ -16,8 +16,8 @@ app.secret_key = os.urandom(24)
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
 
-comment_manager = CommentManager()
-image_manager = ImageManager()
+# comment_manager = CommentManager()
+# image_manager = ImageManager()
 
 upload_images = []
 db = Database()

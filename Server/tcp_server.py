@@ -14,7 +14,6 @@ logging.basicConfig(
     filemode='a',  
     level=logging.INFO,
     format='%(asctime)s - TCPServer - %(levelname)s - %(message)s'
-    format='%(asctime)s - TCPServer - %(levelname)s - %(message)s'
 )
 
 logger = logging.getLogger('TCPServer')

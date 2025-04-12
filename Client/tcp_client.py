@@ -11,7 +11,6 @@ logging.basicConfig(
     filemode='w',
     level=logging.INFO,
     format='%(asctime)s - TCPClient - %(levelname)s - %(message)s'
-    format='%(asctime)s - TCPClient - %(levelname)s - %(message)s'
 )
 
 logger = logging.getLogger('TCPClient')

@@ -63,8 +63,6 @@ body {
 }
 
 /* Masonry Grid Layout */
-
-/* Masonry Grid Layout */
 .masonry-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -73,8 +71,6 @@ body {
 }
 
 
-.login {
-    background-size: cover;
 .login {
     background-size: cover;
     background-image: url('../images/bg.jpg');
@@ -106,12 +102,10 @@ body.login-page {
 }
 
 .formbg {
-.formbg {
-    color: white;
+
     width: 75%;
 }
 
-.logpg {
 .logpg {
     color: white;
     background-color: rgba(14, 13, 13, 0.5);
@@ -169,18 +163,12 @@ body.login-page {
     width: 100%;
     object-fit: contain;
 }
-}
 
 .comment-modal {
     max-width: 800px;
     width: 80%;
 }
-.comment-modal {
-    max-width: 800px;
-    width: 80%;
-}
 
-.comment {
 .comment {
     background-color: rgba(143, 52, 229, 0.144);
     border-radius: 10px;
@@ -357,4 +345,3 @@ body.login-page {
     margin: 0 5px;
     padding: 8px 20px;
 }
-

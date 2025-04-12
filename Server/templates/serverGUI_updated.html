@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Server</title>
+    <link rel="stylesheet" href="server.css">
+    <style>
+        body {
+            background-color: black;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Control Panel</h1>
+    <h2>Logs</h2>
+
+    <div class="square" id="square">Starting...</div>
+    <div id="log-container" style="white-space: pre-wrap; background: #000; color: #0f0; padding: 1em; height: 300px; overflow-y: scroll;"></div>
+
+    <script>
+        async function fetchLogs() {
+            try {
+                const response = await fetch("/get_logs_gui");
+                const logs = await response.json(); // or text() if your backend returns plain text
+                const logContainer = document.getElementById("log-container");
+
+                // Clear and set new logs
+                logContainer.innerText = Array.isArray(logs) ? logs.join("") : logs;
+            } catch (err) {
+                console.error("Failed to fetch logs:", err);
+            }
+        }
+        // Fetch logs every 1 second
+        setInterval(fetchLogs, 1000);
+    </script>
+</body>
+</html>

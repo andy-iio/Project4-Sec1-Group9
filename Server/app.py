@@ -20,10 +20,26 @@ app.logger.handlers = []
 socket_server = None
 tcp_log_file = 'server_log.txt'
 
+@app.route('/get_logs_gui', methods=['GET'])
+def read_logs_GUI():
+    """Read the log file and return the last few lines"""
+    try:
+        with open(tcp_log_file, 'r') as f:
+            logs = f.readlines()
+        return logs[-10:]  # Return the last 10 lines of the log file
+    except FileNotFoundError:
+        return ["Log file not found."]
+    
+
+def get_logs_gui():
+    """Serve the logs to the frontend"""
+    logs = read_logs_GUI()
+    return jsonify(logs)
+
 @app.route('/')
 
 def index():
-    return render_template('servergui.html')
+    return render_template('serverGUI_updated.html')
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):

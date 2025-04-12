@@ -1,4 +1,3 @@
-
 from Client.tcp_client import TCPClient
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
@@ -16,11 +15,13 @@ app.secret_key = os.urandom(24)
 
 tcp_client = TCPClient(server_host='localhost', server_port=5001)
 
+
 comment_manager = CommentManager()
 image_manager = ImageManager()
 
 upload_images = []
 db = Database()
+
 
 @app.route('/')
 def login():
@@ -107,9 +108,19 @@ def index():
     return render_template('index.html', images=images, user=user, categories=categories)
 
 
+#prev home route   
+# #home page
+# @app.route('/home')
+# def index():
+#     # Use TCP client to fetch images
+#     # success, response = tcp_client.send_request("GET_IMAGES", {})
+#     images = image_manager.get_images()
+#     return render_template('index.html', images=images)
+
+
 @app.route('/saved')
 def saved():
-
+  
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
@@ -145,6 +156,7 @@ def save_image():
         return jsonify({"success": True, "message": "Image saved to your vault!!"})
     else:
         return jsonify({"success": False, "message": "Image already saved or couldn't be saved"})
+
 
 @app.route('/unsave_image', methods=['POST'])
 def unsave_image():
@@ -186,6 +198,34 @@ def profile():
                           uploaded_count=uploaded_count,
                           comment_count=comment_count)
 
+# =======
+#     # Use TCP client to fetch saved images
+#     # success, response = tcp_client.send_request("GET_SAVED_IMAGES", {"username": username})
+#     username = "Andy"
+#     images = image_manager.get_saved_images(username)
+#     return render_template('saved-section.html', images=images, username=username)
+
+# #when clicking the saved button on an image, copy it to the saved section
+# @app.route('/save_image', methods=['POST'])
+# def save_image():
+#     image_id = request.json.get('image_id')
+#     username = "Andy" 
+
+#     image = image_manager.get_image_by_id(image_id)
+#     if image:
+#         image_manager.save_image_for_user(image, username)
+#         return jsonify({"success": True, "message": "Image saved to your vault!!"})
+
+#     return jsonify({"success": False, "message": "Couldn't save this image. Please try again later"})
+
+# #profile page
+# @app.route('/profile')
+# def profile():
+#     username = "Andy"
+#     return render_template('profile.html', username=username)
+# >>>>>>> db-to-master-merge-check
+
+
 @app.route('/upload', methods=['POST'])
 def upload_image():
     
@@ -198,20 +238,54 @@ def upload_image():
     image = request.files['image']
     caption = request.form.get('caption')
     tags = request.form.get('tags')
-
-    image_data, error = image_manager.upload_image(image, caption, tags)
-    if error:
-        return error, 400
+    
+    if image.filename == '':
+        return 'No selected file', 400
+    
+    # Save the file to uploads folder
+    image_content = image.read()
+    image_filename = image.filename
+    upload_folder = './static/uploads'
+    
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+    
+    image_path = os.path.join(upload_folder, image_filename)
+    
+    with open(image_path, 'wb') as f:
+        f.write(image_content)
+    
+    # Encode image to base64 
+    base64_image = base64.b64encode(image_content).decode('utf-8')
+    
+   
+    image_url = f"./static/uploads/{image_filename}"
+    image_id = db.upload_image(image_url, caption, tags, session['user_id'], base64_image)
+    
+    image_data = {
+        "id": image_id,
+        "url": image_url,
+        "caption": caption,
+        "category": tags,
+        "user_id": session['user_id'],
+        "image": base64_image
+    }
     
     success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
+    
+# =======
+#     image_data, error = image_manager.upload_image(image, caption, tags)
+#     if error:
+#         return error, 400
+    
+#     success, response = tcp_client.send_request("UPLOAD_IMAGE", image_data)
+# >>>>>>> db-to-master-merge-check
 
     if success:
         return redirect(url_for('index'))
     else:
-        return jsonify({'status': 'error', 'message': response})
+        return redirect(url_for('index')) #we are just going to ignore this error #jsonify({'status': 'error', 'message': response})
 
-#comment handleing routes
-#to get the comments for a specific post
 @app.route('/api/comments/<int:image_id>')
 def get_comments_for_img(image_id):
     comments = db.get_comments(image_id)
@@ -229,9 +303,32 @@ def save_comment():
     if not data or 'imageId' not in data or 'text' not in data:
         return jsonify({"success": False, "message": "Fill out all required fields"})
 
+# =======
+# #comment handleing routes
+# #to get the comments for a specific post
+# @app.route('/api/comments/<int:image_id>')
+# def get_comments_for_img(image_id):
+#     image_comments = comment_manager.get_comments(image_id)
+#     return jsonify({"success": True, "comments": image_comments})
+
+# #save a newly written comment
+# @app.route('/api/comments', methods=['POST'])
+# def save_comment():
+#     data = request.json
+#     if not data or 'imageId' not in data or 'text' not in data:
+#         return jsonify({"success": False, "message": "fill out all required fields"})
+
+#     image_id = data['imageId']
+#     comment_text = data['text']
+    
+#     result = comment_manager.save_comment(image_id, comment_text)
+    
+#     return jsonify(result)
+# >>>>>>> db-to-master-merge-check
 
     image_id = data['imageId']
     comment_text = data['text']
+
 
     success = db.add_comment(image_id, comment_text, session['user_id'])
     

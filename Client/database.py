@@ -140,6 +140,7 @@ class Database:
         """Insert default images into the database"""
         # Default images 
         default_images = [
+
             (1, "./static/images/1.jpg", "Best Survival Tools for Preppers", "Tools", 1,1),
             (2, "./static/images/2.jpg", "Prepare for Food Shortages", "Meal Prep", 1,1),
             (3, "./static/images/3.jpg", "Amazing Survival Recipes", "Meal Prep", 1,1),
@@ -151,6 +152,7 @@ class Database:
             (9, "./static/images/9.jpg", "If you don'T have these in your pantry, uh oh", "Meal Prep", 1,1),
             (10, "./static/images/10.jpg", "Rebuild after the apocalypse is over with these plants", "Gardening", 1,1),
             (11, "./static/images/11.jpg", "Flowers will be worth millions soon, enjoy them now", "Gardening", 1,1)
+
         ]
         
         

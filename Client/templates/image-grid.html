@@ -1,22 +1,23 @@
 <!-- andy g 2025-02-26 -->
 
 <div class="masonry-grid" id="masonry-grid">
-    {% for image in images %}
-    <div class="card">
-        <img src="{{ image.url }}" class="card-img-top" alt="{{ image.caption }}" 
-         data-id="{{ image.id }}" 
-         data-caption="{{ image.caption }}" 
-         data-category="{{ image.category }}"
-         data-bs-toggle="modal" 
-         data-bs-target="#imageModal">
-    <div class="card-body">
-      <h5 class="card-title">{{ image.caption }}</h5>
-      <p class="card-text">{{ image.category }}</p>
-      <button class="btn btn-success save-btn" data-id="{{ image.id }}">Save to Vault</button>
-    </div>
+  {% for image in images %}
+  <div class="card">
+      <img src="{{ image.url }}" class="card-img-top" alt="{{ image.caption }}" 
+       data-id="{{ image.id }}" 
+       data-caption="{{ image.caption }}" 
+       data-category="{{ image.category }}"
+       data-bs-toggle="modal" 
+       data-bs-target="#imageModal">
+  <div class="card-body">
+    <h5 class="card-title">{{ image.caption }}</h5>
+    <p class="card-text">{{ image.category }}</p>
+    <button class="btn btn-success save-btn" data-id="{{ image.id }}">Save to Vault</button>
   </div>
-    {% endfor %}
+</div>
+  {% endfor %}
 </div>
 {% include "comments.html" %}
 
-<script src="{{ url_for('static', filename='js/img-grid.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/image-grid.js') }}"></script>

@@ -5,10 +5,10 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, s
 import time
 import base64
 import os
-from database import Database
+from Client.database import Database
 
-from comment_manager import CommentManager
-from image_manager import ImageManager
+from Client.comment_manager import CommentManager
+from Client.image_manager import ImageManager
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  

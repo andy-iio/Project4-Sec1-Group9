@@ -11,40 +11,34 @@ logging.basicConfig(
     filemode='w',
     level=logging.INFO,
     format='%(asctime)s - TCPClient - %(levelname)s - %(message)s'
+    format='%(asctime)s - TCPClient - %(levelname)s - %(message)s'
 )
 
 logger = logging.getLogger('TCPClient')
-
-# tried to add a filter to exclude static file requests from logs(kind of works)
-class FilterStaticRequests(logging.Filter): # pragma: no cover
+#this should get rid of the repetivite loh ruquests in gui
+class FilterStaticRequests(logging.Filter):
     def filter(self, record):
         if hasattr(record, 'msg') and isinstance(record.msg, str):
-            if '/static/' in record.msg or 'GET /static' in record.msg:
+            if '/static/' in record.msg or 'GET /static' in record.msg or 'GET /get_logs' in record.msg:
                 return False
         return True
 
 logger.addFilter(FilterStaticRequests())
 
 class TCPClient:
-    """
-    TCP/IP Socket client for communicating with the server
-    """
-    
     def __init__(self, server_host='localhost', server_port=5001):
-        """Initialize the socket client"""
         self.server_host = server_host
         self.server_port = server_port
         self.socket = None
         self.connected = False
         self.sequence_number = 0
+        self.current_user = None
         
     def connect(self):
-        """Connect to the server"""
         try:
-            # Create socket
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.settimeout(5)
             
-            # Connect to the server
             self.socket.connect((self.server_host, self.server_port))
             logger.info(f"Connected to server at {self.server_host}:{self.server_port}")
             
@@ -53,54 +47,61 @@ class TCPClient:
             
         except Exception as e:
             logger.error(f"Connection error: {str(e)}")
+            self.connected = False
             return False
     
     def disconnect(self): # pragma: no cover
         """Disconnect from the server"""
         if self.socket:
             self.socket.close()
+            self.socket = None
         self.connected = False
         logger.info("Disconnected from server")
     
     def send_request(self, command, data):
-        """Send a request to the server"""
         if not self.connected:
             if not self.connect():
                 return False, "Failed to connect to server"
                 
         # Create request packet
         packet = self.create_packet(command, data)
-        
-        # Send request
+        #ALL NAMING FUNCTIONS THAT SERVER SHOULD CALL
         try:
             packet_json = json.dumps(packet)
             self.socket.sendall(packet_json.encode('utf-8'))
             
-         
-            logger.info(f"SENDING REQUEST TO SERVER: Command={command}")
+            user_info = ""
+            if command == "LOGIN" and data.get('username'):
+                self.current_user = data.get('username')
+                user_info = f"[User: {self.current_user}] "
+            elif self.current_user and command != "LOGOUT":
+                user_info = f"[User: {self.current_user}] "
             
-            # For important commands it will  log more details
-            if command in ["LOGIN", "REGISTER", "LOGOUT", "SAVE_IMAGE", "UNSAVE_IMAGE", "UPLOAD_IMAGE", "ADD_COMMENT"]:
+            logger.info(f"{user_info}SENDING REQUEST: Command={command}")
+            
+            if command in ["LOGIN", "REGISTER", "LOGOUT", "SAVE_IMAGE", "UNSAVE_IMAGE", "UPLOAD_IMAGE", "ADD_COMMENT", "SEARCH"]:
                 if command == "LOGIN":
-                    logger.info(f"User '{data.get('username')}' logging in")
+                    logger.info(f"Login attempt for user '{data.get('username')}'")
                 elif command == "REGISTER":
-                    logger.info(f"New user '{data.get('username')}' registering")
+                    logger.info(f"Registering new user '{data.get('username')}'")
                 elif command == "LOGOUT":
-                    logger.info(f"User logging out")
+                    logger.info(f"User '{self.current_user}' logging out")
+                    self.current_user = None
                 elif command == "SAVE_IMAGE":
-                    logger.info(f"Saving image ID: {data.get('image_id')}")
+                    logger.info(f"User '{self.current_user}' saving image ID: {data.get('image_id')}")
                 elif command == "UNSAVE_IMAGE":
-                    logger.info(f"Removing saved image ID: {data.get('image_id')}")
+                    logger.info(f"User '{self.current_user}' removing saved image ID: {data.get('image_id')}")
                 elif command == "UPLOAD_IMAGE":
-                    logger.info(f"Uploading new image with caption: {data.get('caption')}")
+                    logger.info(f"User '{self.current_user}' uploading image: {data.get('caption')}")
                 elif command == "ADD_COMMENT":
-                    logger.info(f"Adding comment to image ID: {data.get('image_id')}")
+                    logger.info(f"User '{self.current_user}' adding comment to image ID: {data.get('image_id')}")
+                elif command == "SEARCH":
+                    logger.info(f"User '{self.current_user}' searching for '{data.get('query')}' (Type: {data.get('type', 'posts')})")
             
-            # Wait for response from the server to then log it
             response = self.receive_response()
             
             if response:
-                logger.info(f"RECEIVED RESPONSE FROM SERVER: {response['body']['command']}")
+                logger.info(f"{user_info}RECEIVED RESPONSE: {response['body']['command']}")
                 return True, response
             else:
                 logger.warning("No response received from server")
@@ -108,12 +109,10 @@ class TCPClient:
                 
         except Exception as e:
             logger.error(f"Error sending request: {str(e)}")
-            # Try to reconnect on next request
             self.disconnect()
             return False, str(e)
     
     def create_packet(self, command, data):
-        """Create a request packet"""
         self.sequence_number += 1
         
         body = {
@@ -140,15 +139,12 @@ class TCPClient:
         return packet
     
     def calculate_checksum(self, data):
-        """Calculate checksum for data"""
         return hashlib.md5(data.encode('utf-8')).hexdigest()
     
     def validate_checksum(self, data, checksum):
-        """Validate the checksum matches the data"""
         return self.calculate_checksum(data) == checksum
     
     def receive_response(self, timeout=10):
-        """Receive and parse a response from the server"""
         self.socket.settimeout(timeout)
         
         try:
@@ -185,3 +181,78 @@ class TCPClient:
         except Exception as e:
             logger.error(f"Error receiving response: {str(e)}")
             return None
+    
+    # searching posts and users
+    def search(self, query, search_type="posts", user_id=None):
+        """
+        Search for posts or users
+        """
+        search_data = {
+            "query": query,
+            "type": search_type
+        }
+        
+        if user_id:
+            search_data["user_id"] = user_id
+        
+        logger.info(f"Performing search: '{query}' (Type: {search_type})")
+        success, response = self.send_request("SEARCH", search_data)
+        
+        if success and response and 'body' in response and 'data' in response['body']:
+            results = response['body']['data'].get('results', [])
+            logger.info(f"Search returned {len(results)} results")
+            return True, results
+        else:
+            logger.warning(f"Search failed for '{query}'")
+            return False, []
+    
+    # UPDATED saving images
+    def save_image(self, image_id, user_id):
+        """
+        Save an image to the user's vault
+        """
+        save_data = {
+            "image_id": image_id,
+            "user_id": user_id
+        }
+        
+        logger.info(f"Saving image: ID={image_id} for user ID={user_id}")
+        success, response = self.send_request("SAVE_IMAGE", save_data)
+        
+        if success and response and 'body' in response:
+            command = response['body'].get('command', '')
+            if command == "SAVE_IMAGE_SUCCESS":
+                logger.info(f"Image {image_id} saved successfully")
+                return True, "Image saved to vault"
+            else:
+                logger.warning(f"Save image failed: {response['body'].get('data', {}).get('message', 'Unknown error')}")
+                return False, response['body'].get('data', {}).get('message', "Failed to save image")
+        else:
+            logger.warning(f"Failed to save image {image_id}")
+            return False, "Communication error"
+    
+    # UPDATED LOGIC for unsaving images
+    def unsave_image(self, image_id, user_id):
+        """
+        Remove an image from the user's vault
+        """
+        unsave_data = {
+            "image_id": image_id,
+            "user_id": user_id
+        }
+        
+        logger.info(f"Removing saved image: ID={image_id} for user ID={user_id}")
+        success, response = self.send_request("UNSAVE_IMAGE", unsave_data)
+        
+        if success and response and 'body' in response:
+            command = response['body'].get('command', '')
+            if command == "UNSAVE_IMAGE_SUCCESS":
+                logger.info(f"Image {image_id} removed from saved")
+                return True, "Image removed from vault"
+            else:
+                logger.warning(f"Unsave image failed: {response['body'].get('data', {}).get('message', 'Unknown error')}")
+                return False, response['body'].get('data', {}).get('message', "Failed to remove image")
+        else:
+            logger.warning(f"Failed to unsave image {image_id}")
+            return False, "Communication error"
+    

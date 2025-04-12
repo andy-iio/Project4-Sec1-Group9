@@ -19,6 +19,27 @@ body {
 }
 
 
+
+body {
+    background-color: #f5f1e8; 
+}
+
+/* Container styling */
+.container.mt-4 {
+    background-color: #f9f7f3; 
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+}
+
+
+.navbar {
+    background-color: #e8ded1 !important; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+
 .card {
     margin-bottom: 20px;
     border-radius: 16px;
@@ -26,17 +47,22 @@ body {
     transition: transform 0.3s ease;
     max-width: 300px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
+
 
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
+
 .card-img-top {
     width: 100%;
     object-fit: cover;
 }
+
+/* Masonry Grid Layout */
 
 /* Masonry Grid Layout */
 .masonry-grid {
@@ -47,6 +73,8 @@ body {
 }
 
 
+.login {
+    background-size: cover;
 .login {
     background-size: cover;
     background-image: url('../images/bg.jpg');
@@ -64,18 +92,38 @@ body.login-page {
 
 .form-group {
     color: white;
+    
+    background-color: transparent;
 }
 
+body.login-page {
+    
+    background-color: transparent;
+}
+
+.form-group {
+    color: white;
+}
+
+.formbg {
 .formbg {
     color: white;
     width: 75%;
 }
 
 .logpg {
+.logpg {
     color: white;
     background-color: rgba(14, 13, 13, 0.5);
 }
 
+.login-container {
+    background-color: rgba(14, 13, 13, 0.7);
+    border-radius: 8px;
+    padding: 30px;
+    color: white;
+}
+/* upload */
 .login-container {
     background-color: rgba(14, 13, 13, 0.7);
     border-radius: 8px;
@@ -114,21 +162,116 @@ body.login-page {
 }
 
 /* comment */
+/* comment */
 #modalImage {
     max-height: 600px;
     width: 100%;
+    width: 100%;
     object-fit: contain;
+}
 }
 
 .comment-modal {
     max-width: 800px;
     width: 80%;
 }
+.comment-modal {
+    max-width: 800px;
+    width: 80%;
+}
 
+.comment {
 .comment {
     background-color: rgba(143, 52, 229, 0.144);
     border-radius: 10px;
 }
+
+/* Button */
+.btn-sm {
+    border-radius: 20px;
+    padding: 0.25rem 0.8rem;
+}
+
+.btn-outline-success:hover {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+/* Profile Page*/
+.profile-image {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 5px solid #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    transition: transform 0.3s;
+}
+
+.profile-image:hover {
+    transform: scale(1.05);
+}
+
+.profile-card {
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    background-color: #fff;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #198754;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.user-info {
+    margin: 20px 0;
+}
+
+.user-info-item {
+    display: flex;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.user-info-label {
+    font-weight: bold;
+    min-width: 120px;
+}
+
+.action-buttons {
+    margin-top: 20px;
+}
+
+.action-buttons .btn {
+    margin: 0 5px;
+    padding: 8px 20px;
+}
+
+
 
 /* Button */
 .btn-sm {

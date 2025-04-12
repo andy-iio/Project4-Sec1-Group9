@@ -1,3 +1,4 @@
+
 import base64
 import os
 import json
@@ -38,7 +39,8 @@ class ImageManager:
         base64_image = base64.b64encode(image_content).decode('utf-8')
 
         #store the image in the folder (since database is not ready yet)
-        image_filename = image_file.filename
+        from werkzeug.utils import secure_filename
+        image_filename = secure_filename(image_file.filename)
         image_path = os.path.join(self.upload_folder, image_filename)
 
         with open(image_path, 'wb') as f:
@@ -47,7 +49,7 @@ class ImageManager:
         #new image dictionary for the users newly uploaded image
         uploaded_image = {
             'id': len(self.uploaded_images) + 1, 
-            'url': f"./static/uploads/{image_filename}",
+            'url': f"/static/uploads/{image_filename}",
             'caption': caption,
             'category': tags
         }
@@ -95,4 +97,4 @@ class ImageManager:
         #dont double save an image, so check is not already saved
        if not any(saved_image['id'] == int(image['id']) for saved_image in self.saved_images[username]):
             self.saved_images[username].append(image)
-            self.save_saved_images() 
+            self.save_saved_images()

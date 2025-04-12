@@ -140,17 +140,17 @@ class Database:
         """Insert default images into the database"""
         # Default images 
         default_images = [
-            (1, "./static/images/1.jpg", "Best Survival Tools for Preppers", "Tools", 1),
-            (2, "./static/images/2.jpg", "Prepare for Food Shortages", "Meal Prep", 1),
-            (3, "./static/images/3.jpg", "Amazing Survival Recipes", "Meal Prep", 1),
-            (4, "./static/images/4.jpg", "YOU NEED TO KNOW THESE LIFE HACKS!", "Hacks", 1),
-            (5, "./static/images/5.jpg", "Your emergency stockpile isnt complete without these 100 things", "Tools", 1),
-            (6, "./static/images/6.jpg", "World War 3 is Coming, are you Prepared??", "Tips", 1),
-            (7, "./static/images/7.jpg", "Want to Survive? Better read this..", "Tips", 1),
-            (8, "./static/images/8.jpg", "Clothes that Guarantee Survival", "Clothes", 1),
-            (9, "./static/images/9.jpg", "If you don'T have these in your pantry, uh oh", "Meal Prep", 1),
-            (10, "./static/images/10.jpg", "Rebuild after the apocalypse is over with these plants", "Gardening", 1),
-            (11, "./static/images/11.jpg", "Flowers will be worth millions soon, enjoy them now", "Gardening", 1)
+            (1, "./static/images/1.jpg", "Best Survival Tools for Preppers", "Tools", 1,1),
+            (2, "./static/images/2.jpg", "Prepare for Food Shortages", "Meal Prep", 1,1),
+            (3, "./static/images/3.jpg", "Amazing Survival Recipes", "Meal Prep", 1,1),
+            (4, "./static/images/4.jpg", "YOU NEED TO KNOW THESE LIFE HACKS!", "Hacks", 1,1),
+            (5, "./static/images/5.jpg", "Your emergency stockpile isnt complete without these 100 things", "Tools", 1,1),
+            (6, "./static/images/6.jpg", "World War 3 is Coming, are you Prepared??", "Tips", 1,1),
+            (7, "./static/images/7.jpg", "Want to Survive? Better read this..", "Tips", 1,1),
+            (8, "./static/images/8.jpg", "Clothes that Guarantee Survival", "Clothes", 1,1),
+            (9, "./static/images/9.jpg", "If you don'T have these in your pantry, uh oh", "Meal Prep", 1,1),
+            (10, "./static/images/10.jpg", "Rebuild after the apocalypse is over with these plants", "Gardening", 1,1),
+            (11, "./static/images/11.jpg", "Flowers will be worth millions soon, enjoy them now", "Gardening", 1,1)
         ]
         
         

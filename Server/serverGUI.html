@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="server.css">
+        <body style="background-color:black; color: white;">
+        <title>Page Title</title>
+    </head>
+    <body>
+        <h1>Control Panel</h1>
+        <h2>Logs</h2>
+        <p>
+            <pre>&lt;request one&gt;</pre>
+            <pre>&lt;request two&gt;</pre>
+            <pre>&lt;request three&gt;</pre>
+            <pre>&lt;request four&gt;</pre>
+            <pre>&lt;request five&gt;</pre>
+        </p>
+       
+        <div class="square" id="square">Starting...</div>
+
+        <button class="S-Button" onclick="alert('Starting Server...')"Starting Server></button>
+        <button class="E-Button" onclick="alert('Stopping Server...')"Stopping Server></button>
+
+        <script>
+        const square = document.getElementById("square");
+
+        const sample =  [
+            "<request one>",
+        ];
+
+        let index = 0;
+
+        setInterval(() => {
+
+            const newRequest = document.createElement("div");
+            newRequest.innerText = sample[index];
+            square.appendChild(newRequest); // Add the new request to the square
+
+            // Wrap the text in <pre> tags and display it in the logs container
+            logsContainer.innerHTML = `<pre>${sample[index]}</pre>`;
+
+            // Increment the index and loop back to the start once it exceeds the array length
+            index = (index + 1) % sample.length;
+        }, 1000); // Update every 1 second (1000 ms)
+
+
+    </script>
+    </body>
+</html>

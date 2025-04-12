@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
+
 import threading
 import os
 import logging
@@ -20,6 +21,7 @@ socket_server = None
 tcp_log_file = 'server_log.txt'
 
 @app.route('/')
+
 def index():
     return render_template('servergui.html')
 
@@ -85,7 +87,7 @@ def get_logs():
 def start_socket_server():
     """Start the TCP server in a separate thread"""
     global socket_server
-    
+
     # Initialize the server
     socket_server = TCPServer(port=5001)
     
@@ -94,6 +96,27 @@ def start_socket_server():
     server_thread.daemon = True
     server_thread.start()
 
+# <<<<<<< Image_Classifier
+# # The log file to read from
+# LOG_FILE = 'server_log.txt'
+
+# @app.route('/get_logs', methods=['GET'])
+# def get_logs():
+#     """Serve the logs to the frontend"""
+#     logs = read_logs()
+#     return jsonify(logs)
+
+# def read_logs():
+#     """Read the log file and return the last few lines"""
+#     try:
+#         with open(LOG_FILE, 'r') as f:
+#             logs = f.readlines()
+#         return logs[-10:]  # Return the last 10 lines of the log file
+#     except FileNotFoundError:
+#         return ["Log file not found."]
+
+# # Start the socket server in a background thread
+# =======
 if __name__ == '__main__':
     # Start the socket server in a separate thread
     print("\n")

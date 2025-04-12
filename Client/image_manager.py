@@ -1,6 +1,13 @@
 import base64
 import os
 import json
+import sys
+
+#importiing the load an predict function from Image Classifier Branch (Alexa's Branch)
+# Adds the project root to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Image_Classifier.Image_Classifier.deployment import load_and_predict
+
 
 
 class ImageManager:
@@ -43,13 +50,21 @@ class ImageManager:
 
         with open(image_path, 'wb') as f:
             f.write(image_content)
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))  # path to image_manager.py
+        model_path = os.path.join(base_dir, "../Image_Classifier/Image_Classifier/imageclassifierHS_Updated.h5")
+        model_path = os.path.normpath(model_path)
+
+
+        image_path = f"./static/uploads/{image_filename}"
+        predicted_category = load_and_predict(model_path, image_path)
         
         #new image dictionary for the users newly uploaded image
         uploaded_image = {
             'id': len(self.uploaded_images) + 1, 
             'url': f"./static/uploads/{image_filename}",
             'caption': caption,
-            'category': tags,
+            'category': [tags, predicted_category],
             'image': base64_image
         }
 

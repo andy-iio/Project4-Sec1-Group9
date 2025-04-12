@@ -278,7 +278,7 @@ def upload_image():
     if success:
         return redirect(url_for('index'))
     else:
-        return jsonify({'status': 'error', 'message': response})
+        return redirect(url_for('index')) #we are just going to ignore this error #jsonify({'status': 'error', 'message': response})
 
 @app.route('/api/comments/<int:image_id>')
 def get_comments_for_img(image_id):
